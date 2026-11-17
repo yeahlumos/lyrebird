@@ -1,5 +1,7 @@
 "use client";
 
+import { BackgroundVideo, FollowHomeButton, backgroundAccept, backgroundFormatHint, backgroundImage, createBackgroundMedia, followHome, isBackgroundFile, useHomeBackground, type BackgroundMedia } from "../_background/media";
+
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -145,9 +147,10 @@ export default function DossierPage() {
   const [editing, setEditing] = useState(true);
   const [filter, setFilter] = useState("全部");
   const [saveError, setSaveError] = useState("");
-  const [selectedCover, setSelectedCover] = useState("bird3");
+  const [selectedCover, setSelectedCover] = useState(followHome);
+  const homeBackground = useHomeBackground();
   const [coverMenuOpen, setCoverMenuOpen] = useState(false);
-  const [storedCovers, setStoredCovers] = useState<{ id: string; name: string; url: string }[]>([]);
+  const [storedCovers, setStoredCovers] = useState<({ id: string; name: string } & BackgroundMedia)[]>([]);
   const [coverBusy, setCoverBusy] = useState(false);
   const [coverError, setCoverError] = useState("");
   const [avatarUrl, setAvatarUrl] = useState("");
@@ -179,14 +182,14 @@ export default function DossierPage() {
     readCovers().then((covers) => {
       if (!active) return;
       const loaded = covers.map(({ id, blob }) => {
-        const url = URL.createObjectURL(blob);
-        coverUrlsRef.current.push(url);
-        return { id, name: blob instanceof File ? blob.name : "已上传照片", url };
+        const media = createBackgroundMedia(blob);
+        coverUrlsRef.current.push(media.url);
+        return { id, name: blob instanceof File ? blob.name : "已上传背景", ...media };
       });
       setStoredCovers(loaded);
       const saved = localStorage.getItem(coverKey);
       if (saved === "see-you") localStorage.removeItem(coverKey);
-      if (saved && (coverPresets.some((item) => item.id === saved) || loaded.some((item) => item.id === saved))) setSelectedCover(saved);
+      if (saved && (saved === followHome || coverPresets.some((item) => item.id === saved) || loaded.some((item) => item.id === saved))) setSelectedCover(saved);
     }).catch(() => { if (active) setCoverError("背景读取失败，请刷新重试。"); });
     return () => { active = false; coverUrlsRef.current.forEach(URL.revokeObjectURL); coverUrlsRef.current = []; };
   }, []);
@@ -330,15 +333,15 @@ export default function DossierPage() {
   };
   const uploadCover = async (file?: File) => {
     if (!file) return;
-    if (!["image/jpeg", "image/png", "image/webp"].includes(file.type)) { setCoverError("请选择 JPG、PNG 或 WebP 图片。"); return; }
+    if (!isBackgroundFile(file)) { setCoverError(`请选择 ${backgroundFormatHint} 文件。`); return; }
     setCoverBusy(true);
     setCoverError("");
     try {
       const id = `${coverPrefix}${crypto.randomUUID()}`;
       await changeStoredCover(id, file);
-      const url = URL.createObjectURL(file);
-      coverUrlsRef.current.push(url);
-      setStoredCovers((current) => [...current, { id, name: file.name, url }]);
+      const media = createBackgroundMedia(file);
+      coverUrlsRef.current.push(media.url);
+      setStoredCovers((current) => [...current, { id, name: file.name, ...media }]);
       chooseCover(id);
     } catch { setCoverError("背景保存失败，请检查浏览器存储空间。"); }
     finally { setCoverBusy(false); }
@@ -349,14 +352,14 @@ export default function DossierPage() {
     setCoverError("");
     try {
       await changeStoredCover(cover.id);
-      if (selectedCover === cover.id) chooseCover("bird3");
+      if (selectedCover === cover.id) chooseCover(followHome);
       setStoredCovers((current) => current.filter((item) => item.id !== cover.id));
       coverUrlsRef.current = coverUrlsRef.current.filter((url) => url !== cover.url);
       URL.revokeObjectURL(cover.url);
     } catch { setCoverError("删除失败，请稍后重试。"); }
     finally { setCoverBusy(false); }
   };
-  const coverUrl = [...coverPresets, ...storedCovers].find((item) => item.id === selectedCover)?.url ?? "/bird3.jpg";
+  const activeCover = selectedCover === followHome ? homeBackground : [...coverPresets, ...storedCovers].find((item) => item.id === selectedCover);
   let lastYear = "";
   let lastMonth = "";
   const displaySkills = data.skillItems.filter((skill) => skill.name.trim());
@@ -379,26 +382,27 @@ export default function DossierPage() {
     </header>
 
     <section className="dossier-hero" aria-label={view === "portfolio" ? "个人志封面" : "成长归档封面"}>
-      <motion.div className="dossier-hero-image" style={{ y: heroOffset, backgroundImage: `url("${coverUrl}")` }} />
+      <motion.div className="dossier-hero-image" style={{ y: heroOffset, backgroundImage: backgroundImage(activeCover) }}><BackgroundVideo media={activeCover} /></motion.div>
       <div className="dossier-hero-shade" />
       <div className="dossier-hero-content"><span>DOSSIER / 个人志</span><h1>{view === "portfolio" ? "履历与作品集" : "成长归档"}</h1><p>{view === "portfolio" ? "个人经历与作品" : `${allNodes.length} 个项目与学习节点`}</p></div>
       <div className="dossier-cover-settings">
         <button className="dossier-cover-trigger" type="button" aria-label="更换个人志背景" title="更换背景" aria-expanded={coverMenuOpen} onClick={() => setCoverMenuOpen(!coverMenuOpen)}><Settings size={20} /></button>
         {coverMenuOpen && <div className="dossier-cover-panel">
-          <div className="dossier-cover-panel-head"><strong>背景照片</strong><button type="button" aria-label="关闭背景设置" title="关闭" onClick={() => setCoverMenuOpen(false)}><X size={16} /></button></div>
+          <div className="dossier-cover-panel-head"><strong>背景设置</strong><button type="button" aria-label="关闭背景设置" title="关闭" onClick={() => setCoverMenuOpen(false)}><X size={16} /></button></div>
+          <FollowHomeButton active={selectedCover === followHome} onSelect={() => chooseCover(followHome)} />
           <div className="dossier-cover-grid">
             {coverPresets.map((cover) => <button type="button" key={cover.id} className={`dossier-cover-choice ${selectedCover === cover.id ? "selected" : ""}`} aria-pressed={selectedCover === cover.id} onClick={() => chooseCover(cover.id)}>
               <span style={{ backgroundImage: `url("${cover.url}")` }}>{selectedCover === cover.id && <Check size={17} />}</span><small>{cover.name}</small>
             </button>)}
             {storedCovers.map((cover, index) => <div className="dossier-cover-saved" key={cover.id}>
               <button type="button" className={`dossier-cover-choice ${selectedCover === cover.id ? "selected" : ""}`} aria-label={`使用已上传背景 ${index + 1}`} aria-pressed={selectedCover === cover.id} onClick={() => chooseCover(cover.id)}>
-                <span style={{ backgroundImage: `url("${cover.url}")` }}>{selectedCover === cover.id && <Check size={17} />}</span><small title={cover.name}>{cover.name}</small>
+                <span className="relative" style={{ backgroundImage: backgroundImage(cover) }}><BackgroundVideo media={cover} preview />{selectedCover === cover.id && <Check className="relative" size={17} />}</span><small title={cover.name}>{cover.name}</small>
               </button>
               <button className="dossier-cover-delete" type="button" aria-label={`删除已上传背景 ${cover.name}`} title="删除已上传的背景" disabled={coverBusy} onClick={() => void removeCover(cover)}><Trash2 size={14} /></button>
             </div>)}
           </div>
-          <label className="dossier-cover-upload" htmlFor="dossier-cover-file"><ImagePlus size={16} />上传背景照片</label>
-          <input id="dossier-cover-file" className="visually-hidden" type="file" accept="image/jpeg,image/png,image/webp" disabled={coverBusy} onChange={(event) => { void uploadCover(event.target.files?.[0]); event.target.value = ""; }} />
+          <label className="dossier-cover-upload" htmlFor="dossier-cover-file"><ImagePlus size={16} />上传背景</label>
+          <input id="dossier-cover-file" className="visually-hidden" type="file" accept={backgroundAccept} disabled={coverBusy} onChange={(event) => { void uploadCover(event.target.files?.[0]); event.target.value = ""; }} />
           {coverError && <p role="alert">{coverError}</p>}
         </div>}
       </div>
