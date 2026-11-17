@@ -1,0 +1,433 @@
+.gleam-page {
+  position: relative;
+  isolation: isolate;
+  min-height: 100vh;
+  min-height: 100svh;
+  overflow: hidden;
+  color: #273f3d;
+}
+
+.gleam-background,
+.gleam-tint {
+  position: fixed;
+  inset: 0;
+  z-index: -2;
+}
+
+.gleam-background {
+  background: #889b9a url("/bird3.jpg") center / cover no-repeat;
+}
+
+.gleam-tint {
+  z-index: -1;
+  background: linear-gradient(180deg, rgba(18, 41, 48, .16), rgba(22, 46, 46, .04) 50%, rgba(21, 38, 39, .22));
+}
+
+.gleam-toolbar {
+  position: absolute;
+  inset: 0 0 auto;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 25px clamp(22px, 4vw, 56px);
+}
+
+.gleam-toolbar-right {
+  display: flex;
+  gap: 10px;
+}
+
+.gleam-tool {
+  display: grid;
+  place-items: center;
+  width: 43px;
+  height: 43px;
+  border: 1px solid rgba(255, 255, 255, .64);
+  border-radius: 50%;
+  background: rgba(255, 255, 255, .23);
+  box-shadow: 0 3px 18px rgba(19, 43, 42, .08);
+  backdrop-filter: blur(10px);
+  color: #fff;
+  text-decoration: none;
+  transition: background .2s, transform .2s;
+}
+
+.gleam-tool:hover {
+  background: rgba(255, 255, 255, .36);
+  transform: translateY(-2px);
+}
+
+.gleam-add {
+  background: rgba(255, 255, 255, .32);
+}
+
+.gleam-field {
+  position: relative;
+  width: 100%;
+}
+
+.gleam-note-position {
+  position: absolute;
+  z-index: 1;
+  touch-action: none;
+  cursor: grab;
+}
+
+.gleam-note-position.dragging {
+  z-index: 2;
+  cursor: grabbing;
+}
+
+.gleam-note-position.dragging .gleam-note {
+  animation-play-state: paused;
+}
+
+.gleam-pagination {
+  position: fixed;
+  z-index: 3;
+  bottom: max(22px, env(safe-area-inset-bottom));
+  left: 50%;
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  height: 48px;
+  padding: 4px 7px;
+  border: 1px solid rgba(255, 255, 255, .65);
+  border-radius: 24px;
+  background: rgba(255, 255, 255, .55);
+  box-shadow: 0 7px 25px rgba(21, 43, 43, .14);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  transform: translateX(-50%);
+}
+
+.gleam-pagination button {
+  display: grid;
+  place-items: center;
+  width: 38px;
+  height: 38px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  color: #294d48;
+}
+
+.gleam-pagination button:hover:not(:disabled) {
+  background: rgba(255, 255, 255, .6);
+}
+
+.gleam-pagination button:disabled {
+  opacity: .35;
+  cursor: default;
+}
+
+.gleam-page-count {
+  min-width: 43px;
+  color: #294d48;
+  font-size: 13px;
+  font-variant-numeric: tabular-nums;
+  text-align: center;
+}
+
+.gleam-page-divider {
+  width: 1px;
+  height: 19px;
+  margin: 0 3px;
+  background: rgba(55, 92, 85, .25);
+}
+
+.gleam-note {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+  width: 100%;
+  min-height: 154px;
+  padding: 25px 25px 22px;
+  border: 1px solid rgba(255, 255, 255, .55);
+  border-radius: 28px 34px 29px 32px;
+  background: rgba(255, 255, 255, var(--gleam-opacity, .5));
+  box-shadow: 0 12px 35px rgba(25, 50, 49, .11);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  color: #233e3b;
+  text-align: left;
+  cursor: inherit;
+  user-select: none;
+  animation: gleam-float 8s ease-in-out infinite alternate;
+  transition: background .2s, box-shadow .2s;
+}
+
+.gleam-note:hover {
+  background: rgba(255, 255, 255, min(1, calc(var(--gleam-opacity, .5) + .12)));
+  box-shadow: 0 17px 42px rgba(25, 50, 49, .18);
+}
+
+.gleam-note-position:nth-child(3n + 2) .gleam-note {
+  animation-name: gleam-float-reverse;
+  border-radius: 34px 25px 35px 27px;
+}
+
+.gleam-note-position:nth-child(4n + 3) .gleam-note {
+  border-radius: 30px 37px 25px 34px;
+}
+
+.gleam-note-text {
+  display: block;
+  overflow-wrap: anywhere;
+  white-space: pre-wrap;
+  font-family: "Songti SC", "Noto Serif CJK SC", serif;
+  font-size: 17px;
+  line-height: 1.7;
+}
+
+.gleam-note-time {
+  margin-top: auto;
+  color: #5c7772;
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+}
+
+@keyframes gleam-float {
+  from { transform: translate(calc(var(--gleam-drift, 6px) * -.5), calc(var(--gleam-drift, 6px) * .5)); }
+  to { transform: translate(var(--gleam-drift, 6px), calc(var(--gleam-drift, 6px) * -1)); }
+}
+
+@keyframes gleam-float-reverse {
+  from { transform: translate(calc(var(--gleam-drift, 6px) * .5), calc(var(--gleam-drift, 6px) * -.5)); }
+  to { transform: translate(calc(var(--gleam-drift, 6px) * -1), var(--gleam-drift, 6px)); }
+}
+
+.gleam-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 10;
+  display: grid;
+  place-items: center;
+  padding: 20px;
+  background: rgba(18, 35, 38, .38);
+  backdrop-filter: blur(4px);
+}
+
+.gleam-dialog {
+  width: min(100%, 520px);
+  max-height: min(90svh, 800px);
+  padding: 27px;
+  overflow-y: auto;
+  border: 1px solid rgba(255, 255, 255, .75);
+  border-radius: 8px;
+  background: rgba(249, 251, 249, .94);
+  box-shadow: 0 25px 80px rgba(20, 38, 37, .22);
+  backdrop-filter: blur(26px);
+}
+
+.gleam-settings {
+  width: min(100%, 380px);
+}
+
+.gleam-background-gallery {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+  max-height: 230px;
+  margin-top: 20px;
+  overflow-y: auto;
+}
+
+.gleam-background-saved { position: relative; min-width: 0; }
+.gleam-background-saved .gleam-background-choice { width: 100%; }
+.gleam-background-delete { position: absolute; top: 6px; right: 6px; display: grid; place-items: center; width: 28px; height: 28px; padding: 0; border: 0; border-radius: 50%; background: rgba(255,255,255,.88); color: #a85e57; }
+.gleam-background-delete:hover { background: #fff; }
+.gleam-background-delete:disabled { opacity: .5; }
+
+.gleam-background-choice {
+  min-width: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: #405b53;
+  text-align: left;
+  font-size: 12px;
+}
+
+.gleam-background-choice > span:last-child {
+  display: block;
+  margin-top: 6px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.gleam-background-thumb {
+  display: grid;
+  place-items: center;
+  width: 100%;
+  aspect-ratio: 1.7;
+  border: 2px solid transparent;
+  border-radius: 5px;
+  background-position: center;
+  background-size: cover;
+  color: #fff;
+}
+
+.gleam-background-choice.selected .gleam-background-thumb {
+  border-color: #39786c;
+}
+
+.gleam-background-thumb svg {
+  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, .65));
+}
+
+.gleam-controls {
+  display: grid;
+  gap: 12px;
+  margin-top: 27px;
+  padding-top: 23px;
+  border-top: 1px solid #d8e3dd;
+}
+
+.gleam-controls label {
+  display: flex;
+  justify-content: space-between;
+  gap: 14px;
+  color: #405b53;
+  font-size: 13px;
+}
+
+.gleam-controls output {
+  color: #70877d;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.gleam-controls input[type="range"] {
+  width: 100%;
+  margin: 0 0 9px;
+  accent-color: #39786c;
+}
+
+.gleam-dialog-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 24px;
+}
+
+.gleam-dialog-head h2 {
+  margin: 0;
+  font-size: 19px;
+  font-weight: 600;
+}
+
+.gleam-close,
+.gleam-delete {
+  display: grid;
+  place-items: center;
+  width: 35px;
+  height: 35px;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  color: #61746d;
+}
+
+.gleam-close:hover,
+.gleam-delete:hover {
+  background: rgba(48, 100, 89, .09);
+}
+
+.gleam-editor textarea {
+  display: block;
+  width: 100%;
+  min-height: 180px;
+  padding: 16px;
+  resize: vertical;
+  border: 1px solid #d8e3dd;
+  border-radius: 5px;
+  background: rgba(255, 255, 255, .7);
+  color: #273f3d;
+  font-size: 16px;
+  line-height: 1.75;
+}
+
+.gleam-editor textarea::placeholder {
+  color: #a1b0a8;
+}
+
+.gleam-editor-time,
+.gleam-file-hint {
+  display: block;
+  margin-top: 11px;
+  color: #82968d;
+  font-size: 12px;
+}
+
+.gleam-editor-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 25px;
+}
+
+.gleam-delete,
+.gleam-delete-confirm {
+  margin-right: auto;
+}
+
+.gleam-delete-confirm {
+  padding: 8px 12px;
+  border: 1px solid #d8b0a8;
+  border-radius: 4px;
+  background: #fff6f4;
+  color: #a3473c;
+  font-size: 13px;
+}
+
+.gleam-save,
+.gleam-upload {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 9px;
+  min-height: 41px;
+  padding: 0 17px;
+  border: 0;
+  border-radius: 4px;
+  background: #39786c;
+  color: #fff;
+  font-size: 13px;
+}
+
+.gleam-save:disabled {
+  opacity: .45;
+  cursor: not-allowed;
+}
+
+.gleam-upload {
+  cursor: pointer;
+}
+
+.gleam-error {
+  margin: 14px 0 0;
+  color: #a3473c;
+  font-size: 12px;
+}
+
+@media (max-width: 850px) {
+  .gleam-field { width: 100%; }
+}
+
+@media (max-width: 560px) {
+  .gleam-toolbar { padding: 20px; }
+  .gleam-field { width: 100%; }
+  .gleam-note { min-height: 132px; gap: 12px; padding: 20px; }
+  .gleam-dialog { padding: 22px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .gleam-note { animation: none; }
+  .gleam-tool { transition: none; }
+}
