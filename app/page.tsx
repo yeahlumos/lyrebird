@@ -177,7 +177,7 @@ export default function Home() {
         <div className="hero-topline">
           <span className="topline-mark">LYREBIRD <span>琴鸟</span></span>
           <div className="hero-actions">
-            <button
+            {videoSource && <button
               type="button"
               className="settings-trigger sound-trigger"
               aria-label="视频静音"
@@ -186,7 +186,7 @@ export default function Home() {
               onClick={toggleSound}
             >
               <SoundIcon size={21} strokeWidth={1.7} />
-            </button>
+            </button>}
             <button
               ref={settingsButtonRef}
               className="settings-trigger"

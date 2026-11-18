@@ -15,14 +15,25 @@ export function isBackgroundFile(file: File) {
   return formats.includes(file.type);
 }
 
-export type BackgroundMedia = { url: string; video?: boolean };
+export type BackgroundMedia = { url: string; video?: boolean; gradient?: boolean };
+
+const homePresets: Record<string, BackgroundMedia> = {
+  bird3: { url: "/bird3.jpg" },
+  bird1: { url: "/Bird1.jpg" },
+  bird2: { url: "/bird2.jpg" },
+  miku: { url: "/初音未来.jpg" },
+  frieren: { url: "/芙莉莲.jpg" },
+  mist: { url: "linear-gradient(135deg, #658c86 0%, #a9c7bd 46%, #d3dbca 100%)", gradient: true },
+  dusk: { url: "linear-gradient(135deg, #24404b 0%, #747b85 52%, #ba9b97 100%)", gradient: true },
+  "shoujo-ed": { url: "/backgrounds/shoujo-ed.mp4", video: true },
+};
 
 export function createBackgroundMedia(blob: Blob): BackgroundMedia {
   return { url: URL.createObjectURL(blob), video: blob.type.startsWith("video/") };
 }
 
 export function backgroundImage(media?: BackgroundMedia) {
-  return media && !media.video ? `url("${media.url}")` : undefined;
+  return media && !media.video ? media.gradient ? media.url : `url("${media.url}")` : undefined;
 }
 
 export function openBackgroundDb(): Promise<IDBDatabase> {
@@ -66,23 +77,26 @@ export async function writeBackgroundUpload(id: string, file?: File): Promise<vo
 }
 
 export function useHomeBackground() {
-  const [media, setMedia] = useState<BackgroundMedia>();
+  const [media, setMedia] = useState<BackgroundMedia>(homePresets.bird3);
 
   useEffect(() => {
     let revision = 0;
-    let current: BackgroundMedia | undefined;
+    let currentUploadUrl: string | undefined;
     const refresh = async () => {
       const request = ++revision;
       let blob: Blob | undefined;
+      let selected = "bird3";
       try {
-        if (localStorage.getItem(homeBackgroundKey) === homeUploadId) blob = await readBackgroundUpload(homeUploadId);
+        selected = localStorage.getItem(homeBackgroundKey) ?? "bird3";
+        if (selected === homeUploadId) blob = await readBackgroundUpload(homeUploadId);
       } catch {
-        // Keep the section's built-in background if browser storage is unavailable.
+        selected = "bird3";
       }
       if (request !== revision) return;
-      if (current) URL.revokeObjectURL(current.url);
-      current = blob ? createBackgroundMedia(blob) : undefined;
-      setMedia(current);
+      if (currentUploadUrl) URL.revokeObjectURL(currentUploadUrl);
+      const next = blob ? createBackgroundMedia(blob) : homePresets[selected] ?? homePresets.bird3;
+      currentUploadUrl = blob ? next.url : undefined;
+      setMedia(next);
     };
     const onStorage = (event: StorageEvent) => {
       if (event.key === null || event.key === homeBackgroundKey || event.key === homeUploadRevisionKey) void refresh();
@@ -92,7 +106,7 @@ export function useHomeBackground() {
     return () => {
       revision++;
       window.removeEventListener("storage", onStorage);
-      if (current) URL.revokeObjectURL(current.url);
+      if (currentUploadUrl) URL.revokeObjectURL(currentUploadUrl);
     };
   }, []);
 
