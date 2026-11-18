@@ -1,5 +1,7 @@
 "use client";
 
+import { BackgroundVideo, FollowHomeButton, backgroundAccept, backgroundFormatHint, backgroundImage, createBackgroundMedia, isBackgroundFile, useHomeBackground, type BackgroundMedia } from "../_background/media";
+
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { ArrowLeft, Check, ChevronLeft, ChevronRight, ImagePlus, Plus, Settings2, Trash2, X } from "lucide-react";
@@ -138,7 +140,8 @@ export default function DiaryPage() {
   const [viewYear, setViewYear] = useState(0);
   const [viewMonth, setViewMonth] = useState(0);
   const [entries, setEntries] = useState<Entries>({});
-  const [savedCovers, setSavedCovers] = useState<LoadedImage[]>([]);
+  const [savedCovers, setSavedCovers] = useState<(LoadedImage & BackgroundMedia)[]>([]);
+  const homeBackground = useHomeBackground();
   const [coverRevision, setCoverRevision] = useState(0);
   const [photos, setPhotos] = useState<LoadedImage[]>([]);
   const [coverSettingsOpen, setCoverSettingsOpen] = useState(false);
@@ -238,9 +241,9 @@ export default function DiaryPage() {
     getSavedCovers(entriesRef.current).then((covers) => {
       if (!active) return;
       const loaded = covers.map(({ id, blob }) => {
-        const url = URL.createObjectURL(blob);
-        urls.push(url);
-        return { id, url };
+        const media = createBackgroundMedia(blob);
+        urls.push(media.url);
+        return { id, ...media };
       });
       setSavedCovers(loaded);
     }).catch(() => { if (active) setImageError("封面读取失败，请刷新重试。"); });
@@ -301,7 +304,7 @@ export default function DiaryPage() {
 
   const changeCover = async (file?: File) => {
     if (!file) return;
-    if (!["image/jpeg", "image/png", "image/webp"].includes(file.type)) { setImageError("请选择 JPG、PNG 或 WebP 图片。"); return; }
+    if (!isBackgroundFile(file)) { setImageError(`请选择 ${backgroundFormatHint} 文件。`); return; }
     const key = selectedRef.current;
     setBusy(true);
     setImageError("");
@@ -390,7 +393,8 @@ export default function DiaryPage() {
   const daysInMonth = new Date(viewYear, viewMonth + 1, 0).getDate();
   const years = Array.from({ length: 21 }, (_, index) => viewYear - 10 + index);
   const photoUrl = (id: string) => photos.find((photo) => photo.id === id)?.url;
-  const coverUrl = [...presetCovers, ...savedCovers].find((cover) => cover.id === entry.cover)?.url;
+  const activeCover: BackgroundMedia | undefined = [...presetCovers, ...savedCovers].find((cover) => cover.id === entry.cover) ?? homeBackground;
+  const coverShade = "linear-gradient(180deg, rgba(15, 34, 31, .35), rgba(16, 39, 34, .13) 42%, rgba(14, 33, 29, .35))";
 
   return (
     <main className="diary-page">
@@ -418,7 +422,8 @@ export default function DiaryPage() {
         </div>
       </aside>
 
-      <section className="diary-main" style={{ backgroundImage: `linear-gradient(180deg, rgba(15, 34, 31, .35), rgba(16, 39, 34, .13) 42%, rgba(14, 33, 29, .35)), url("${coverUrl ?? "/bird3.jpg"}")` }}>
+      <section className="diary-main relative isolate" style={{ backgroundImage: `${coverShade}, ${backgroundImage(activeCover) ?? 'url("/bird3.jpg")'}` }}>
+        {activeCover?.video && <div className="pointer-events-none absolute inset-0 -z-10"><BackgroundVideo media={activeCover} /><div className="absolute inset-0" style={{ backgroundImage: coverShade }} /></div>}
         <header className="diary-header">
           <div className="diary-header-left"><button className="diary-plus" type="button" aria-label="添加日记内容" title="添加日记内容" onClick={() => openEditor()}><Plus size={22} /></button><div><span className="diary-kicker">SOLITUDE / 独白</span><h1>{fullDate(selectedDate)}</h1></div></div>
           <div className="diary-header-actions">
@@ -448,16 +453,17 @@ export default function DiaryPage() {
       {coverSettingsOpen && <div className="diary-overlay" onMouseDown={(event) => { if (event.target === event.currentTarget) setCoverSettingsOpen(false); }}>
         <section className="diary-cover-dialog" role="dialog" aria-modal="true" aria-labelledby="diary-cover-title">
           <div className="diary-editor-head"><h2 id="diary-cover-title">当日背景</h2><button type="button" aria-label="关闭背景设置" title="关闭" onClick={() => setCoverSettingsOpen(false)}><X size={20} /></button></div>
-          <label className="diary-cover-upload" htmlFor="diary-cover-input"><ImagePlus size={17} />上传照片</label>
-          <input id="diary-cover-input" className="visually-hidden" type="file" accept="image/jpeg,image/png,image/webp" disabled={busy} onChange={(event) => { void changeCover(event.target.files?.[0]); event.target.value = ""; }} />
+          <label className="diary-cover-upload" htmlFor="diary-cover-input"><ImagePlus size={17} />上传背景</label>
+          <input id="diary-cover-input" className="visually-hidden" type="file" accept={backgroundAccept} disabled={busy} onChange={(event) => { void changeCover(event.target.files?.[0]); event.target.value = ""; }} />
           {imageError && <p className="diary-error" role="alert">{imageError}</p>}
+          <FollowHomeButton active={!entry.cover} onSelect={() => { updateEntry(selected, { cover: undefined }); setCoverSettingsOpen(false); }} />
           <div className="diary-cover-gallery" role="group" aria-label="选择当日背景">
-            {presetCovers.map((cover) => <button type="button" key={cover.id} className={`diary-cover-choice ${(entry.cover ?? "bird3") === cover.id ? "selected" : ""}`} aria-label={`使用${cover.name}背景`} aria-pressed={(entry.cover ?? "bird3") === cover.id} onClick={() => { updateEntry(selected, { cover: cover.id === "bird3" ? undefined : cover.id }); setCoverSettingsOpen(false); }}>
-              <span className="diary-cover-thumb" style={{ backgroundImage: `url("${cover.url}")` }}>{(entry.cover ?? "bird3") === cover.id && <Check size={17} />}</span><span>{cover.name}</span>
+            {presetCovers.map((cover) => <button type="button" key={cover.id} className={`diary-cover-choice ${entry.cover === cover.id ? "selected" : ""}`} aria-label={`使用${cover.name}背景`} aria-pressed={entry.cover === cover.id} onClick={() => { updateEntry(selected, { cover: cover.id }); setCoverSettingsOpen(false); }}>
+              <span className="diary-cover-thumb" style={{ backgroundImage: `url("${cover.url}")` }}>{entry.cover === cover.id && <Check size={17} />}</span><span>{cover.name}</span>
             </button>)}
             {savedCovers.map((cover, index) => <div className="diary-cover-saved" key={cover.id}>
               <button type="button" className={`diary-cover-choice ${entry.cover === cover.id ? "selected" : ""}`} aria-label={`使用已上传背景 ${index + 1}`} aria-pressed={entry.cover === cover.id} onClick={() => { updateEntry(selected, { cover: cover.id }); setCoverSettingsOpen(false); }}>
-                <span className="diary-cover-thumb" style={{ backgroundImage: `url("${cover.url}")` }}>{entry.cover === cover.id && <Check size={17} />}</span><span>已上传 {index + 1}</span>
+                <span className="diary-cover-thumb relative" style={{ backgroundImage: backgroundImage(cover) }}><BackgroundVideo media={cover} preview />{entry.cover === cover.id && <Check className="relative" size={17} />}</span><span>已上传 {index + 1}</span>
               </button>
               <button className="diary-cover-delete" type="button" aria-label={`删除已上传背景 ${index + 1}`} title="删除已上传的背景" disabled={busy} onClick={() => void removeCover(cover.id)}><Trash2 size={15} /></button>
             </div>)}

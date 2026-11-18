@@ -1,5 +1,8 @@
 "use client";
 
+import { BackgroundVideo, FollowHomeButton, backgroundAccept, backgroundFormatHint, backgroundImage, createBackgroundMedia, followHome, isBackgroundFile, openBackgroundDb, useHomeBackground, writeBackgroundUpload, type BackgroundMedia } from "../_background/media";
+
+
 import { useEffect, useRef, useState, type CSSProperties, type PointerEvent as ReactPointerEvent } from "react";
 import Link from "next/link";
 import { ArrowLeft, Check, ChevronLeft, ChevronRight, ImagePlus, Plus, Settings, Trash2, X } from "lucide-react";
@@ -7,7 +10,7 @@ import "./gleam.css";
 
 type Gleam = { id: string; text: string; createdAt: string; page?: number; position?: { x: number; y: number } };
 type GleamSettings = { transparency: number; speed: number; amplitude: number };
-type SavedBackground = { id: string; name: string; url: string };
+type SavedBackground = { id: string; name: string } & BackgroundMedia;
 
 const notesKey = "lyrebird-gleam-notes";
 const pagesKey = "lyrebird-gleam-pages";
@@ -32,19 +35,6 @@ function savedSetting(value: unknown, fallback: number, min: number, max: number
   return typeof value === "number" && Number.isFinite(value)
     ? Math.min(max, Math.max(min, value))
     : fallback;
-}
-
-function openBackgroundDb(): Promise<IDBDatabase> {
-  return new Promise((resolve, reject) => {
-    const request = indexedDB.open("lyrebird");
-    request.onupgradeneeded = () => {
-      if (!request.result.objectStoreNames.contains("backgrounds")) {
-        request.result.createObjectStore("backgrounds");
-      }
-    };
-    request.onsuccess = () => resolve(request.result);
-    request.onerror = () => reject(request.error);
-  });
 }
 
 async function getBackgrounds(): Promise<{ id: string; blob: Blob }[]> {
@@ -73,35 +63,6 @@ async function getBackgrounds(): Promise<{ id: string; blob: Blob }[]> {
   }
 }
 
-async function putBackground(id: string, file: File): Promise<void> {
-  const db = await openBackgroundDb();
-  try {
-    await new Promise<void>((resolve, reject) => {
-      const transaction = db.transaction("backgrounds", "readwrite");
-      transaction.objectStore("backgrounds").put(file, id);
-      transaction.oncomplete = () => resolve();
-      transaction.onerror = () => reject(transaction.error);
-      transaction.onabort = () => reject(transaction.error);
-    });
-  } finally {
-    db.close();
-  }
-}
-
-async function deleteBackground(id: string): Promise<void> {
-  const db = await openBackgroundDb();
-  try {
-    await new Promise<void>((resolve, reject) => {
-      const transaction = db.transaction("backgrounds", "readwrite");
-      transaction.objectStore("backgrounds").delete(id);
-      transaction.oncomplete = () => resolve();
-      transaction.onerror = () => reject(transaction.error);
-      transaction.onabort = () => reject(transaction.error);
-    });
-  } finally {
-    db.close();
-  }
-}
 
 function formatDate(value: string) {
   const date = new Date(value);
@@ -120,7 +81,8 @@ export default function GleamPage() {
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [gleamSettings, setGleamSettings] = useState<GleamSettings>(defaultSettings);
   const [backgrounds, setBackgrounds] = useState<SavedBackground[]>([]);
-  const [selectedBackground, setSelectedBackground] = useState("bird3");
+  const [selectedBackground, setSelectedBackground] = useState(followHome);
+  const homeBackground = useHomeBackground();
   const [uploadError, setUploadError] = useState("");
   const [uploading, setUploading] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
@@ -183,14 +145,14 @@ export default function GleamPage() {
       const gallery = saved
         .sort((a, b) => b.id.localeCompare(a.id))
         .map(({ id, blob }) => {
-          const url = URL.createObjectURL(blob);
-          backgroundUrlsRef.current.push(url);
-          return { id, name: blob instanceof File ? blob.name : "之前上传的照片", url };
+          const media = createBackgroundMedia(blob);
+          backgroundUrlsRef.current.push(media.url);
+          return { id, name: blob instanceof File ? blob.name : "已上传背景", ...media };
         });
       setBackgrounds(gallery);
       const selected = localStorage.getItem(selectedBackgroundKey);
       if (selected === "see-you") localStorage.removeItem(selectedBackgroundKey);
-      if (selected && (selected === "default" || presetBackgrounds.some((item) => item.id === selected) || gallery.some((item) => item.id === selected))) {
+      if (selected && (selected === followHome || selected === "default" || presetBackgrounds.some((item) => item.id === selected) || gallery.some((item) => item.id === selected))) {
         setSelectedBackground(selected);
       } else if (!selected && gallery.some((item) => item.id === backgroundKey)) {
         setSelectedBackground(backgroundKey);
@@ -390,18 +352,18 @@ export default function GleamPage() {
 
   const upload = async (file?: File) => {
     if (!file) return;
-    if (!["image/jpeg", "image/png", "image/webp"].includes(file.type)) {
-      setUploadError("请选择 JPG、PNG 或 WebP 图片。");
+    if (!isBackgroundFile(file)) {
+      setUploadError(`请选择 ${backgroundFormatHint} 文件。`);
       return;
     }
     setUploading(true);
     setUploadError("");
     try {
       const id = `${backgroundPrefix}${Date.now()}-${crypto.randomUUID()}`;
-      await putBackground(id, file);
-      const url = URL.createObjectURL(file);
-      backgroundUrlsRef.current.push(url);
-      setBackgrounds((current) => [{ id, name: file.name, url }, ...current]);
+      await writeBackgroundUpload(id, file);
+      const media = createBackgroundMedia(file);
+      backgroundUrlsRef.current.push(media.url);
+      setBackgrounds((current) => [{ id, name: file.name, ...media }, ...current]);
       chooseBackground(id);
       setSettingsOpen(false);
     } catch {
@@ -416,8 +378,8 @@ export default function GleamPage() {
     setUploading(true);
     setUploadError("");
     try {
-      await deleteBackground(item.id);
-      if (selectedBackground === item.id) chooseBackground("bird3");
+      await writeBackgroundUpload(item.id);
+      if (selectedBackground === item.id) chooseBackground(followHome);
       setBackgrounds((current) => current.filter((background) => background.id !== item.id));
       backgroundUrlsRef.current = backgroundUrlsRef.current.filter((url) => url !== item.url);
       URL.revokeObjectURL(item.url);
@@ -428,11 +390,11 @@ export default function GleamPage() {
     }
   };
 
-  const backgroundUrl = [...presetBackgrounds, ...backgrounds].find((item) => item.id === selectedBackground)?.url;
+  const activeBackground = selectedBackground === followHome ? homeBackground : [...presetBackgrounds, ...backgrounds].find((item) => item.id === selectedBackground);
 
   return (
     <main className="gleam-page">
-      <div className="gleam-background" style={backgroundUrl ? { backgroundImage: `url("${backgroundUrl}")` } : undefined} />
+      <div className="gleam-background" style={{ backgroundImage: backgroundImage(activeBackground) }}><BackgroundVideo media={activeBackground} /></div>
       <div className="gleam-tint" />
 
       <nav className="gleam-toolbar" aria-label="浮光操作">
@@ -488,10 +450,11 @@ export default function GleamPage() {
               <h2 id="gleam-settings-title">浮光设置</h2>
               <button className="gleam-close" type="button" aria-label="关闭设置" title="关闭设置" onClick={() => setSettingsOpen(false)}><X size={19} /></button>
             </div>
-            <label className="gleam-upload" htmlFor="gleam-background-upload"><ImagePlus size={19} />{uploading ? "正在保存..." : "上传背景照片"}</label>
-            <input id="gleam-background-upload" className="visually-hidden" type="file" accept="image/jpeg,image/png,image/webp" disabled={uploading} onChange={(event) => { void upload(event.target.files?.[0]); event.target.value = ""; }} />
-            <p className="gleam-file-hint">JPG、PNG、WebP</p>
+            <label className="gleam-upload" htmlFor="gleam-background-upload"><ImagePlus size={19} />{uploading ? "正在保存..." : "上传背景"}</label>
+            <input id="gleam-background-upload" className="visually-hidden" type="file" accept={backgroundAccept} disabled={uploading} onChange={(event) => { void upload(event.target.files?.[0]); event.target.value = ""; }} />
+            <p className="gleam-file-hint">{backgroundFormatHint}</p>
             {uploadError && <p className="gleam-error" role="alert">{uploadError}</p>}
+            <FollowHomeButton active={selectedBackground === followHome} onSelect={() => chooseBackground(followHome)} />
             <div className="gleam-background-gallery" role="group" aria-label="已保存背景">
               {presetBackgrounds.map((item) => (
                 <button className={`gleam-background-choice ${selectedBackground === item.id || (item.id === "bird3" && selectedBackground === "default") ? "selected" : ""}`} type="button" key={item.id} aria-pressed={selectedBackground === item.id || (item.id === "bird3" && selectedBackground === "default")} onClick={() => chooseBackground(item.id)}>
@@ -502,7 +465,7 @@ export default function GleamPage() {
               {backgrounds.map((item) => (
                 <div className="gleam-background-saved" key={item.id}>
                   <button className={`gleam-background-choice ${selectedBackground === item.id ? "selected" : ""}`} type="button" aria-pressed={selectedBackground === item.id} onClick={() => chooseBackground(item.id)}>
-                    <span className="gleam-background-thumb" style={{ backgroundImage: `url("${item.url}")` }}>{selectedBackground === item.id && <Check size={18} />}</span>
+                    <span className="gleam-background-thumb relative" style={{ backgroundImage: backgroundImage(item) }}><BackgroundVideo media={item} preview />{selectedBackground === item.id && <Check className="relative" size={18} />}</span>
                     <span title={item.name}>{item.name}</span>
                   </button>
                   <button className="gleam-background-delete" type="button" aria-label={`删除已上传背景 ${item.name}`} title="删除已上传的背景" disabled={uploading} onClick={() => void removeBackground(item)}><Trash2 size={16} /></button>

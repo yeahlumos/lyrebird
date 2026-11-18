@@ -2,6 +2,12 @@
 
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
+import { BackgroundVideo, backgroundAccept, backgroundFormatHint, backgroundImage, createBackgroundMedia, homeBackgroundKey as preferenceKey, homeUploadId as customKey, homeUploadRevisionKey, isBackgroundFile, readBackgroundUpload, writeBackgroundUpload, type BackgroundMedia } from "./_background/media";
+import { useCardEntrance } from "./_home/use-card-entrance";
+import { useHeroEntrance } from "./_home/use-hero-entrance";
+import { useHomeVideo } from "./_home/use-home-video";
+import { useSectionWheel } from "./_home/use-section-wheel";
+import "./_home/home-motion.css";
 import {
   ArrowDown,
   ArrowRight,
@@ -16,13 +22,15 @@ import {
   Settings,
   Sparkles,
   Trash2,
+  Volume2,
+  VolumeX,
   X,
 } from "lucide-react";
 
-const preferenceKey = "lyrebird-background";
-const customKey = "custom";
 
-const backgrounds = [
+type BackgroundPreset = { id: string; name: string; style?: React.CSSProperties; media?: BackgroundMedia };
+
+const backgrounds: readonly BackgroundPreset[] = [
   { id: "bird3", name: "飞鸟 3", style: { backgroundImage: 'url("/bird3.jpg")' } },
   { id: "bird1", name: "飞鸟 1", style: { backgroundImage: 'url("/Bird1.jpg")' } },
   { id: "bird2", name: "飞鸟 2", style: { backgroundImage: 'url("/bird2.jpg")' } },
@@ -30,7 +38,8 @@ const backgrounds = [
   { id: "frieren", name: "芙莉莲", style: { backgroundImage: 'url("/芙莉莲.jpg")' } },
   { id: "mist", name: "薄雾", style: { background: "linear-gradient(135deg, #658c86 0%, #a9c7bd 46%, #d3dbca 100%)" } },
   { id: "dusk", name: "暮色", style: { background: "linear-gradient(135deg, #24404b 0%, #747b85 52%, #ba9b97 100%)" } },
-] as const;
+  { id: "shoujo-ed", name: "少终ED（视频）", media: { url: "/backgrounds/shoujo-ed.mp4", video: true } },
+];
 
 const sections = [
   { number: "01", title: "Gleam / 浮光", description: "灵感记录空间", icon: Sparkles, className: "gleam" },
@@ -42,67 +51,18 @@ const sections = [
   { number: "07", title: "Hollow / 树洞", description: "即将开启", icon: HeartHandshake, className: "hollow" },
 ] as const;
 
-function openBackgroundDb(): Promise<IDBDatabase> {
-  return new Promise((resolve, reject) => {
-    const request = indexedDB.open("lyrebird");
-    request.onupgradeneeded = () => {
-      request.result.createObjectStore("backgrounds");
-    };
-    request.onsuccess = () => resolve(request.result);
-    request.onerror = () => reject(request.error);
-  });
-}
-
-async function readCustomBackground(): Promise<Blob | undefined> {
-  const db = await openBackgroundDb();
-  try {
-    return await new Promise((resolve, reject) => {
-      const request = db.transaction("backgrounds", "readonly").objectStore("backgrounds").get(customKey);
-      request.onsuccess = () => resolve(request.result as Blob | undefined);
-      request.onerror = () => reject(request.error);
-    });
-  } finally {
-    db.close();
-  }
-}
-
-async function saveCustomBackground(file: File): Promise<void> {
-  const db = await openBackgroundDb();
-  try {
-    await new Promise<void>((resolve, reject) => {
-      const transaction = db.transaction("backgrounds", "readwrite");
-      transaction.objectStore("backgrounds").put(file, customKey);
-      transaction.oncomplete = () => resolve();
-      transaction.onerror = () => reject(transaction.error);
-      transaction.onabort = () => reject(transaction.error);
-    });
-  } finally {
-    db.close();
-  }
-}
-
-async function deleteCustomBackground(): Promise<void> {
-  const db = await openBackgroundDb();
-  try {
-    await new Promise<void>((resolve, reject) => {
-      const transaction = db.transaction("backgrounds", "readwrite");
-      transaction.objectStore("backgrounds").delete(customKey);
-      transaction.oncomplete = () => resolve();
-      transaction.onerror = () => reject(transaction.error);
-      transaction.onabort = () => reject(transaction.error);
-    });
-  } finally {
-    db.close();
-  }
-}
-
 export default function Home() {
   const [selected, setSelected] = useState("bird3");
-  const [customUrl, setCustomUrl] = useState<string>();
+  const [customMedia, setCustomMedia] = useState<BackgroundMedia>();
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [uploadError, setUploadError] = useState("");
   const [uploading, setUploading] = useState(false);
   const customUrlRef = useRef<string | undefined>(undefined);
+  const homeRef = useRef<HTMLElement>(null);
+  const spacesGridRef = useRef<HTMLDivElement>(null);
+  useCardEntrance(spacesGridRef);
+  const heroEntrance = useHeroEntrance(homeRef);
+  useSectionWheel(homeRef, settingsOpen);
   const settingsButtonRef = useRef<HTMLButtonElement>(null);
   const closeButtonRef = useRef<HTMLButtonElement>(null);
 
@@ -115,20 +75,20 @@ export default function Home() {
         if (active) setSelected(saved);
       });
     }
-    readCustomBackground()
+    readBackgroundUpload(customKey)
       .then((blob) => {
         if (!active) return;
         if (!blob) {
           if (saved === customKey) localStorage.removeItem(preferenceKey);
           return;
         }
-        const url = URL.createObjectURL(blob);
-        customUrlRef.current = url;
-        setCustomUrl(url);
+        const media = createBackgroundMedia(blob);
+        customUrlRef.current = media.url;
+        setCustomMedia(media);
         if (saved === customKey) setSelected(customKey);
       })
       .catch(() => {
-        if (active && saved === customKey) setUploadError("无法读取已保存的照片，请重新上传。");
+        if (active && saved === customKey) setUploadError("无法读取已保存的背景，请重新上传。");
       });
     return () => {
       active = false;
@@ -161,36 +121,37 @@ export default function Home() {
 
   const uploadBackground = async (file?: File) => {
     if (!file) return;
-    if (!["image/jpeg", "image/png", "image/webp"].includes(file.type)) {
-      setUploadError("请选择 JPG、PNG 或 WebP 图片。");
+    if (!isBackgroundFile(file)) {
+      setUploadError(`请选择 ${backgroundFormatHint} 文件。`);
       return;
     }
     setUploading(true);
     setUploadError("");
     try {
-      await saveCustomBackground(file);
-      const url = URL.createObjectURL(file);
+      await writeBackgroundUpload(customKey, file);
+      const media = createBackgroundMedia(file);
       if (customUrlRef.current) URL.revokeObjectURL(customUrlRef.current);
-      customUrlRef.current = url;
-      setCustomUrl(url);
+      customUrlRef.current = media.url;
+      setCustomMedia(media);
       chooseBackground(customKey);
+      localStorage.setItem(homeUploadRevisionKey, crypto.randomUUID());
     } catch {
-      setUploadError("照片保存失败，请检查浏览器存储空间后重试。");
+      setUploadError("背景保存失败，请检查浏览器存储空间后重试。");
     } finally {
       setUploading(false);
     }
   };
 
   const removeCustomBackground = async () => {
-    if (!window.confirm("删除这张已上传的背景照片？")) return;
+    if (!window.confirm("删除已上传的首页背景？")) return;
     setUploading(true);
     setUploadError("");
     try {
-      await deleteCustomBackground();
+      await writeBackgroundUpload(customKey);
       if (selected === customKey) chooseBackground("bird3");
       if (customUrlRef.current) URL.revokeObjectURL(customUrlRef.current);
       customUrlRef.current = undefined;
-      setCustomUrl(undefined);
+      setCustomMedia(undefined);
     } catch {
       setUploadError("删除失败，请稍后重试。");
     } finally {
@@ -199,33 +160,50 @@ export default function Home() {
   };
 
   const selectedBackground = backgrounds.find((background) => background.id === selected);
-  const heroStyle = selected === customKey && customUrl
-    ? { backgroundImage: `url("${customUrl}")` }
-    : selectedBackground?.style ?? backgrounds[0].style;
+  const activeMedia = selected === customKey ? customMedia : selectedBackground?.media;
+  const videoSource = activeMedia?.video ? activeMedia.url : undefined;
+  const { videoRef, soundOff, toggleSound } = useHomeVideo(videoSource);
+  const SoundIcon = soundOff ? VolumeX : Volume2;
+  const image = backgroundImage(activeMedia);
+  const heroStyle = image ? { backgroundImage: image } : selectedBackground?.style ?? backgrounds[0].style;
 
   return (
-    <main>
-      <section className="hero" aria-labelledby="site-title">
-        <div className="hero-image" style={heroStyle} />
+    <main ref={homeRef}>
+      <section data-scroll-section className="hero" aria-labelledby="site-title">
+        <div className="hero-image" style={heroStyle}>
+          {videoSource && <video key={videoSource} ref={videoRef} className="pointer-events-none absolute inset-0 h-full w-full object-cover" src={videoSource} loop playsInline preload="metadata" aria-hidden="true" />}
+        </div>
         <div className="hero-shade" />
         <div className="hero-topline">
           <span className="topline-mark">LYREBIRD <span>琴鸟</span></span>
-          <button
-            ref={settingsButtonRef}
-            className="settings-trigger"
-            type="button"
-            aria-label="背景设置"
-            title="背景设置"
-            onClick={() => setSettingsOpen(true)}
-          >
-            <Settings size={21} strokeWidth={1.7} />
-          </button>
+          <div className="hero-actions">
+            {videoSource && <button
+              type="button"
+              className="settings-trigger sound-trigger"
+              aria-label="视频静音"
+              aria-pressed={soundOff}
+              title={soundOff ? "开启视频声音" : "静音"}
+              onClick={toggleSound}
+            >
+              <SoundIcon size={21} strokeWidth={1.7} />
+            </button>}
+            <button
+              ref={settingsButtonRef}
+              className="settings-trigger"
+              type="button"
+              aria-label="背景设置"
+              title="背景设置"
+              onClick={() => setSettingsOpen(true)}
+            >
+              <Settings size={21} strokeWidth={1.7} />
+            </button>
+          </div>
         </div>
 
-        <div className="hero-content">
+        <div className="hero-content" key={heroEntrance} data-entrance={heroEntrance}>
           <h1 id="site-title">Lyrebird</h1>
           <span className="hero-divider" aria-hidden="true" />
-          <p>for you, a thousand times over</p>
+          <p><span className="hero-type">for you, a thousand times over</span></p>
         </div>
 
         <a className="scroll-cue" href="#spaces" aria-label="向下查看分区" title="查看分区">
@@ -233,13 +211,13 @@ export default function Home() {
         </a>
       </section>
 
-      <section className="spaces" id="spaces" aria-labelledby="spaces-title">
+      <section data-scroll-section className="spaces min-h-svh" id="spaces" aria-labelledby="spaces-title">
         <div className="spaces-inner">
           <header className="spaces-heading">
             <span className="section-index">LYREBIRD / SPACES</span>
             <h2 id="spaces-title">my mind grows</h2>
           </header>
-          <div className="spaces-grid">
+          <div className="spaces-grid" ref={spacesGridRef}>
             {sections.map((section) => {
               const Icon = section.icon;
               const content = (
@@ -295,8 +273,9 @@ export default function Home() {
                   onClick={() => chooseBackground(background.id)}
                   aria-pressed={selected === background.id}
                 >
-                  <span className="preset-image" style={background.style}>
-                    {selected === background.id && <Check size={20} strokeWidth={2.2} />}
+                  <span className="preset-image relative" style={background.style}>
+                    <BackgroundVideo media={background.media} preview />
+                    {selected === background.id && <Check className="relative" size={20} strokeWidth={2.2} />}
                   </span>
                   <span className="preset-name">{background.name}</span>
                 </button>
@@ -305,26 +284,26 @@ export default function Home() {
             <div className="upload-area">
               <label className="upload-button" htmlFor="background-upload">
                 <ImagePlus size={19} strokeWidth={1.7} />
-                {uploading ? "正在保存..." : "上传自定义照片"}
+                {uploading ? "正在保存..." : "上传自定义背景"}
               </label>
               <input
                 id="background-upload"
                 className="visually-hidden"
                 type="file"
-                accept="image/jpeg,image/png,image/webp"
+                accept={backgroundAccept}
                 disabled={uploading}
                 onChange={(event) => {
                   void uploadBackground(event.target.files?.[0]);
                   event.target.value = "";
                 }}
               />
-              <span className="upload-hint">JPG、PNG、WebP</span>
+              <span className="upload-hint">{backgroundFormatHint}</span>
             </div>
-            {customUrl && (
+            {customMedia && (
               <div className="custom-preset-row">
                 <button className={`custom-preset ${selected === customKey ? "selected" : ""}`} type="button" onClick={() => chooseBackground(customKey)} aria-pressed={selected === customKey}>
-                  <span className="custom-thumbnail" style={{ backgroundImage: `url("${customUrl}")` }} />
-                  <span>我的照片</span>
+                  <span className="custom-thumbnail relative" style={{ backgroundImage: backgroundImage(customMedia) }}><BackgroundVideo media={customMedia} preview /></span>
+                  <span>我的背景</span>
                   {selected === customKey && <Check size={18} />}
                 </button>
                 <button className="background-delete" type="button" aria-label="删除已上传的首页背景" title="删除已上传的背景" disabled={uploading} onClick={() => void removeCustomBackground()}><Trash2 size={17} /></button>
