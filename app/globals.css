@@ -1,5 +1,29 @@
 @import "tailwindcss";
 
+button.site-settings-button {
+  display: inline-grid;
+  place-items: center;
+  flex: none;
+  width: 42px;
+  height: 42px;
+  padding: 0;
+  border: 1px solid rgba(255, 255, 255, .8);
+  border-radius: 50%;
+  outline: none;
+  background: rgba(110, 119, 118, .55);
+  color: #fff;
+  backdrop-filter: blur(12px);
+  transition: background .2s;
+}
+
+button.site-settings-button:hover { background: rgba(130, 139, 138, .72); }
+button.site-settings-button:focus-visible { outline: 2px solid #fff; outline-offset: 4px; }
+button.site-settings-button > svg { width: 21px; height: 21px; }
+
+@media (prefers-reduced-motion: reduce) {
+  button.site-settings-button { transition: none; }
+}
+
 html {
   scroll-behavior: smooth;
 }
@@ -71,9 +95,21 @@ label:focus-within {
 }
 
 .topline-mark {
+  display: inline-flex;
+  align-items: center;
   font-size: 13px;
   font-weight: 650;
   letter-spacing: .16em;
+}
+
+.topline-mark .site-logo {
+  flex: none;
+  width: 36px;
+  height: 36px;
+  margin-right: 10px;
+  object-fit: contain;
+  background: transparent;
+  filter: drop-shadow(0 1px 3px rgba(7, 28, 30, .25));
 }
 
 .topline-mark span {
@@ -111,11 +147,23 @@ label:focus-within {
 
 .hero-content h1 {
   margin: 0;
-  font-family: Georgia, "Times New Roman", serif;
+  font-family: var(--font-cormorant), Georgia, "Times New Roman", serif;
   font-size: clamp(72px, 10vw, 132px);
-  font-weight: 400;
+  font-weight: 350;
   line-height: 1.05;
   letter-spacing: 0;
+  white-space: nowrap;
+  background: transparent;
+}
+
+.hero-content h1 span {
+  display: inline-block;
+  color: transparent;
+  background-clip: text;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  text-shadow: none;
+  filter: drop-shadow(0 2px 10px rgba(7, 28, 30, .45));
 }
 
 .hero-divider {
@@ -187,7 +235,7 @@ label:focus-within {
 
 .spaces-grid {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 22px;
 }
 
@@ -376,6 +424,48 @@ label:focus-within {
   border-top: 1px solid #dce5df;
 }
 
+.bird-style-settings {
+  margin-top: 28px;
+  padding-top: 22px;
+  border-top: 1px solid #dce5df;
+}
+
+.bird-style-settings h3 {
+  margin: 0 0 12px;
+  color: #36534d;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.cursor-bird-setting { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-top: 18px; font-size: 13px; cursor: pointer; }
+.cursor-bird-setting input { width: 18px; height: 18px; accent-color: #39786c; cursor: pointer; }
+
+.bird-style-options {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 4px;
+  padding: 4px;
+  border: 1px solid #dce5df;
+  border-radius: 6px;
+  background: #edf2ee;
+}
+
+.bird-style-options button {
+  min-height: 40px;
+  border: 0;
+  border-radius: 4px;
+  background: transparent;
+  color: #60766c;
+  cursor: pointer;
+  font-size: 13px;
+}
+
+.bird-style-options button.selected {
+  background: #fff;
+  color: #276758;
+  box-shadow: 0 1px 4px rgba(8, 29, 29, .1);
+}
+
 .upload-button {
   display: inline-flex;
   align-items: center;
@@ -489,6 +579,7 @@ label:focus-within {
 
 @media (max-width: 620px) {
   .hero-topline { padding: 21px 22px; }
+  .topline-mark .site-logo { width: 30px; height: 30px; margin-right: 8px; }
   .hero-content { width: min(calc(100% - 42px), 440px); }
   .hero-content h1 { font-size: 68px; }
   .hero-content p { font-size: 16px; line-height: 1.9; }

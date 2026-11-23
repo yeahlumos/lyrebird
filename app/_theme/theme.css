@@ -1,0 +1,74 @@
+.global-dark { color-scheme: dark; --diary-night-panel: #18241f; --diary-night-input: #101c17; --diary-night-line: #3c5045; --diary-night-text: #e1eadf; --diary-night-muted: #a5b5a5; }
+.global-dark .diary-page, .global-dark .res-diary-page { color: var(--diary-night-text); background: #101a15; }
+.global-dark .diary-sidebar, .global-dark .res-sidebar { background: var(--diary-night-panel); border-color: var(--diary-night-line); color: var(--diary-night-text); }
+.global-dark .diary-brand, .global-dark .diary-weekday, .global-dark .res-side-top > span, .global-dark .res-weekday, .global-dark .res-legend, .global-dark .res-identity p { color: var(--diary-night-muted); }
+.global-dark .diary-back, .global-dark .diary-date-selects select, .global-dark .diary-today, .global-dark .res-today, .global-dark .res-identity select { background: var(--diary-night-input); border-color: var(--diary-night-line); color: var(--diary-night-text); }
+.global-dark .diary-day, .global-dark .res-day { color: #c2d2bd; }
+.global-dark .diary-day:hover, .global-dark .res-day:hover, .global-dark .diary-back:hover, .global-dark .res-icon:hover { background: #304737; }
+.global-dark .diary-day.selected, .global-dark .res-day.selected { background: #628564; color: #fff; }
+.global-dark .res-identity { background: #122019; border-color: var(--diary-night-line); }
+.global-dark .res-identity label { color: #b5cbb0; }
+.global-dark .diary-post, .global-dark .res-post { background: #18271ff5; border-color: #405b47; color: var(--diary-night-text); }
+.global-dark .res-post.res-other { background: #302522f5; border-left-color: #aa7769; }
+.global-dark .res-post.res-self { border-left-color: #82a277; }
+.global-dark .res-post-text { color: var(--diary-night-text); }
+.global-dark .diary-post time, .global-dark .res-author time, .global-dark .res-reply-head time { color: var(--diary-night-muted); }
+.global-dark .diary-post-edit, .global-dark .res-post-tools, .global-dark .res-text-button { color: #b4d1a7; }
+.global-dark .res-self { --res-color: #b0d2a2; --res-tint: #233a28; --res-border: #5a7853; }
+.global-dark .res-other { --res-color: #e7b4a3; --res-tint: #3a2c27; --res-border: #896352; }
+.global-dark .res-replies { border-color: #58604c; }
+.global-dark .diary-editor, .global-dark .diary-cover-dialog, .global-dark .res-dialog { background: var(--diary-night-panel); border-color: var(--diary-night-line); color: var(--diary-night-text); }
+.global-dark .diary-editor textarea, .global-dark .res-field input, .global-dark .res-field textarea, .global-dark .res-reply-form textarea, .global-dark .res-dialog select { background: var(--diary-night-input); border-color: var(--diary-night-line); color: var(--diary-night-text); }
+.global-dark .diary-editor textarea::placeholder, .global-dark .res-field textarea::placeholder, .global-dark .res-reply-form textarea::placeholder { color: #95a48f; }
+.global-dark .diary-dropzone, .global-dark .res-upload { background: #15221a; border-color: #62765b; }
+.global-dark .diary-editor-head button, .global-dark .diary-editor-actions > span, .global-dark .diary-dropzone > span, .global-dark .res-hint, .global-dark .res-muted, .global-dark .res-editor-footer > span, .global-dark .res-editor-meta, .global-dark .res-upload > span { color: var(--diary-night-muted); }
+.global-dark .diary-cover-upload, .global-dark .res-secondary { background: #253b2a; border-color: #526e4c; color: #deead7; }
+.global-dark .diary-cover-choice, .global-dark .res-background-choice { color: #c3d4b9; }
+.global-dark .res-tabs { background: #101c15; }
+.global-dark .res-tabs button { color: #a8b99c; }
+.global-dark .res-tabs button[aria-pressed="true"] { background: #34503a; color: #eef6e7; }
+.global-dark .res-background-controls button[aria-pressed="true"], .global-dark .diary-cover-dialog button[aria-pressed="true"] { background-color: #304833; color: #eef6e7; border-color: #78966a; }
+.global-dark .res-pill { background: #203525; color: #c3dcba; border-color: #566d4d; }
+.global-dark .diary-error, .global-dark .res-error, .global-dark .diary-delete-post { color: #f2a99c; }
+.global-dark .res-error-panel { background: #38231feb; }
+.global-dark .res-timeline-notice { background: #203526ef; color: #d5e9c9; }
+.global-dark .res-pet-home { background: #1b2d22; }
+.global-dark .res-pet-home small { color: var(--diary-night-muted); }
+
+.global-theme-setting { display: flex; justify-content: space-between; align-items: center; gap: 16px; margin: 20px 0; padding: 16px 0; border-bottom: 1px solid #dce5dc; }
+.global-theme-setting h3 { margin: 0 0 7px; font-size: 14px; font-weight: 500; }
+.global-theme-setting p { margin: 0; color: #7d8f7b; font-size: 11px; }
+.global-theme-toggle { display: inline-flex; align-items: center; justify-content: center; gap: 8px; flex: none; padding: 10px 13px; border: 1px solid #cbd9c5; border-radius: 8px; background: #f0f5ec; color: #4f6b46; font-size: 12px; }
+body.global-dark { background-color: #101a15; color: var(--diary-night-text); }
+.global-dark :is(.spaces, .res-list-page, .res-loading, .res-bucket-page, .dossier-page, .dossier-detail-page) { background-color: #101a15; color: var(--diary-night-text); }
+.global-dark :is(.res-list-page, .res-bucket-page) { background-image: none; }
+.global-dark :is(.space-card, .settings-panel, .gleam-dialog, .gleam-tool, .gleam-pagination, .gleam-note, .dossier-topbar, .dossier-project, .dossier-skill-core, .dossier-skill-branch, .dossier-skill-item, .dossier-detail, .dossier-detail-nav, .dossier-detail-preview-panel, .dossier-cover-panel) { background: #18241ff2; border-color: var(--diary-night-line); color: var(--diary-night-text); }
+.global-dark :is(.spaces-heading h2, .space-card h3, .settings-panel h2, .settings-panel h3, .gleam-note-text, .gleam-dialog h2, .dossier-skill-core strong, .dossier-skill-branch-head h3, .dossier-detail-section h3, .dossier-detail-section p, .dossier-detail-markdown, .dossier-detail-copy, .dossier-bio) { color: var(--diary-night-text); }
+.global-dark :is(.space-card p, .settings-intro, .upload-hint, .preset-name, .gleam-note-time, .gleam-editor-time, .gleam-file-hint, .dossier-subtitle, .dossier-line-item p, .dossier-project p, .dossier-detail-heading p, .dossier-skill-description, .dossier-detail-nav > span) { color: var(--diary-night-muted); }
+.global-dark :is(.preset, .custom-preset, .background-delete, .bird-style-options button, .close-button, .global-theme-toggle, .dossier-switch, .dossier-switch-active, .dossier-back, .dossier-icon-button, .dossier-avatar-edit, .dossier-tags span, .dossier-skill-item, .dossier-detail-actions button, .dossier-detail-upload button) { background: #24372a; border-color: #4c6349; color: #deead6; }
+.global-dark :is(.preset.selected, .bird-style-options button.selected, .custom-preset.selected) { background: #314f36; border-color: #91ad7e; }
+.global-dark :is(.res-card:not(.res-card-with-background), .res-add-card, .res-test-banner, .res-kind button, .res-invite-code) { background: #18291ff0; border-color: var(--diary-night-line); color: var(--diary-night-text); }
+.global-dark :is(.res-card-excerpt, .res-card-foot, .res-card-symbol, .res-list-header .res-eyebrow) { color: #b5c9a9; }
+.global-dark .res-kind button.selected { background: #304b33; border-color: #8baa7c; }
+.global-dark :is(.res-test-note, .res-actions, .global-theme-setting, .dossier-section, .dossier-line-item, .dossier-intro, .dossier-detail-files) { border-color: var(--diary-night-line); }
+.global-dark :is(.res-wishes article, .res-wishes article.done, .res-wish-check) { background: #18271ff2; border-color: var(--diary-night-line); color: var(--diary-night-text); }
+.global-dark :is(.res-wish-add input, .res-bucket-page select, .gleam-editor textarea, .dossier-page input, .dossier-page textarea, .dossier-page select, .dossier-detail-form input, .dossier-detail-form textarea, .dossier-detail-form select, .res-anniversary-name input) { background: var(--diary-night-input); border-color: var(--diary-night-line); color: var(--diary-night-text); }
+.global-dark :is(.res-anniversary-page > nav, .res-anniversary-intro, .res-anniversary-note) { background: #18241ff2; color: var(--diary-night-text); }
+.global-dark .res-anniversary-page { background-color: #101a15; }
+.global-dark .res-anniversary-card:not(.res-anniversary-card-photo) { background-color: #18241ff2; color: var(--diary-night-text); }
+.global-dark .res-anniversary-card:not(.res-anniversary-card-photo) footer { background: #122019aa; }
+.global-dark :is(.res-anniversary-color input, .res-anniversary-add) { background: #18241ff2; border-color: var(--diary-night-line); color: var(--diary-night-text); }
+.global-dark :is(.dossier-detail-file:hover, .dossier-detail-markdown pre, .dossier-skill-core-icon, .dossier-skill-branch-icon) { background: #263a2b; }
+.global-dark :is(.dossier-detail-file-name, .dossier-detail-form label, .dossier-detail-external, .dossier-detail-back, .dossier-section-heading button, .dossier-detail-link, .dossier-detail-edit, .dossier-socials a) { color: #b0d29e; }
+.global-dark .gleam-note-position:nth-child(n) .gleam-note { background: rgba(24,36,31,var(--gleam-opacity,.85)); color: var(--diary-night-text); }
+.global-dark .gleam-pagination button, .global-dark .gleam-controls { color: var(--diary-night-text); }
+.global-dark .atelier-page { background-color: #101a15; color: var(--diary-night-text); }
+.global-dark .atelier-settings > button, .global-dark .atelier-settings-panel { background: #18241ff2; border-color: var(--diary-night-line); color: var(--diary-night-text); }
+.global-dark .atelier-page > a { color: #e1eadf; background-color: #18241fcc; border-color: #4c6349; }
+.global-dark :is(.dossier-calendar, .dossier-node-main, .dossier-archive-empty, .dossier-experience-item, .dossier-project-create, .dossier-skill-edit, .dossier-contact, .dossier-cover-menu) { background: #18241ff2; color: var(--diary-night-text); border-color: var(--diary-night-line); }
+.global-dark :is(.dossier-node-title, .dossier-calendar-heading, .dossier-skill-item strong, .dossier-project h3, .dossier-line-main h3) { color: var(--diary-night-text); }
+.global-dark :is(.dossier-node-summary, .dossier-node-date, .dossier-node-category, .dossier-calendar-foot, .dossier-archive-head p) { color: var(--diary-night-muted); }
+.global-dark :is(.dossier-node-category, .dossier-archive-selection, .dossier-cover-upload, .dossier-filters button, .dossier-contact-links a) { background: #24392a; border-color: #4c6349; color: #c3dcba; }
+.global-dark .dossier-detail-page :is(h1, h2, h3, h4, h5, h6) { color: #fff; font-weight: 700; }
+.global-dark .dossier-showcase-highlights > div { background: var(--diary-night-panel); border-color: var(--diary-night-line); }
+.global-dark .dossier-showcase-highlights p { color: var(--diary-night-text); }

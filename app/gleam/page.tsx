@@ -1,11 +1,13 @@
 "use client";
 
+import SettingsButton from "../_ui/settings-button";
+
 import { BackgroundVideo, FollowHomeButton, backgroundAccept, backgroundFormatHint, backgroundImage, createBackgroundMedia, followHome, isBackgroundFile, openBackgroundDb, useHomeBackground, writeBackgroundUpload, type BackgroundMedia } from "../_background/media";
 
 
 import { useEffect, useRef, useState, type CSSProperties, type PointerEvent as ReactPointerEvent } from "react";
 import Link from "next/link";
-import { ArrowLeft, Check, ChevronLeft, ChevronRight, ImagePlus, Plus, Settings, Trash2, X } from "lucide-react";
+import { ArrowLeft, Check, ChevronLeft, ChevronRight, ImagePlus, Minus, Plus, Trash2, X } from "lucide-react";
 import "./gleam.css";
 
 type Gleam = { id: string; text: string; createdAt: string; page?: number; position?: { x: number; y: number } };
@@ -319,7 +321,18 @@ export default function GleamPage() {
     localStorage.setItem(pagesKey, String(nextPage));
     setPageCount(nextPage);
     setCurrentPage(nextPage);
-    openEditor();
+  };
+
+  const deletePage = () => {
+    if (pageCount === 1) return;
+    if (pageNotes.length && !window.confirm(`删除第 ${currentPage} 页及其中的 ${pageNotes.length} 条浮光？`)) return;
+    updateNotes(notes.filter((note) => (note.page ?? 1) !== currentPage).map((note) =>
+      (note.page ?? 1) > currentPage ? { ...note, page: (note.page ?? 1) - 1 } : note
+    ));
+    const nextCount = pageCount - 1;
+    localStorage.setItem(pagesKey, String(nextCount));
+    setPageCount(nextCount);
+    setCurrentPage(Math.min(currentPage, nextCount));
   };
 
   const updateSetting = (key: keyof GleamSettings, value: number) => {
@@ -400,7 +413,7 @@ export default function GleamPage() {
       <nav className="gleam-toolbar" aria-label="浮光操作">
         <Link className="gleam-tool" href="/" aria-label="返回主页" title="返回主页"><ArrowLeft size={21} strokeWidth={1.7} /></Link>
         <div className="gleam-toolbar-right">
-          <button className="gleam-tool" type="button" aria-label="背景设置" title="背景设置" onClick={() => setSettingsOpen(true)}><Settings size={21} strokeWidth={1.7} /></button>
+          <SettingsButton type="button" aria-label="背景设置" title="背景设置" onClick={() => setSettingsOpen(true)} />
           <button className="gleam-tool gleam-add" type="button" aria-label="添加浮光" title="添加浮光" onClick={() => openEditor()}><Plus size={23} strokeWidth={1.7} /></button>
         </div>
       </nav>
@@ -440,6 +453,7 @@ export default function GleamPage() {
           <button type="button" aria-label="下一页" title="下一页" disabled={currentPage === pageCount} onClick={() => setCurrentPage(currentPage + 1)}><ChevronRight size={20} /></button>
           <span className="gleam-page-divider" aria-hidden="true" />
           <button type="button" aria-label="添加新页面" title="添加新页面" onClick={addPage}><Plus size={21} /></button>
+          <button type="button" aria-label="删除当前页面" title="删除当前页面" disabled={pageCount === 1} onClick={deletePage}><Minus size={21} /></button>
         </nav>
       )}
 

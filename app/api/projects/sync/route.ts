@@ -1,7 +1,7 @@
 import { timingSafeEqual } from "node:crypto";
 import { mkdir, readFile, rename, writeFile } from "node:fs/promises";
 import path from "node:path";
-import type { Project, ProjectFile } from "@/app/dossier/types";
+import type { Project, ProjectFile, ProjectShowcase } from "@/app/dossier/types";
 
 const dataFile = path.join(process.cwd(), "data", "projects.json");
 const uploadsRoot = path.join(process.cwd(), "public", "uploads", "projects");
@@ -57,7 +57,9 @@ export async function POST(request: Request) {
     const form = await request.formData();
     const raw = form.get("manifest");
     if (typeof raw !== "string") return Response.json({ error: "缺少 manifest。" }, { status: 400 });
-    const manifest: unknown = JSON.parse(raw);
+    let manifest: unknown;
+    try { manifest = JSON.parse(raw); }
+    catch { return Response.json({ error: "manifest 必须是有效 JSON。" }, { status: 400 }); }
     if (!manifest || typeof manifest !== "object") return Response.json({ error: "manifest 格式错误。" }, { status: 400 });
     const { project, paths } = manifest as { project?: Record<string, unknown>; paths?: unknown };
     const files = form.getAll("files");
@@ -75,6 +77,9 @@ export async function POST(request: Request) {
     const projectRoot = path.join(uploadsRoot, id);
     const uploaded: ProjectFile[] = [];
     let readme = previous?.readme ?? "";
+    let readmePath = previous?.readmePath ?? (readme ? "README.md" : "");
+    const uploadedReadmePath = filePaths.filter((value): value is string => Boolean(value && /(^|\/)readme\.md$/i.test(value)))
+      .sort((a, b) => a.split("/").length - b.split("/").length || a.localeCompare(b))[0];
     for (let index = 0; index < fileItems.length; index++) {
       const relative = filePaths[index]!;
       const absolute = path.resolve(projectRoot, ...relative.split("/"));
@@ -83,9 +88,12 @@ export async function POST(request: Request) {
       const bytes = Buffer.from(await file.arrayBuffer());
       await mkdir(path.dirname(absolute), { recursive: true });
       await writeFile(absolute, bytes);
-      const url = `/uploads/projects/${encodeURIComponent(id)}/${relative.split("/").map(encodeURIComponent).join("/")}`;
+      const url = `/api/projects/files/${encodeURIComponent(id)}/${relative.split("/").map(encodeURIComponent).join("/")}`;
       uploaded.push({ path: relative, url, type: mimeType(file, relative), size: file.size });
-      if (relative.toLowerCase() === "readme.md") readme = bytes.toString("utf8").slice(0, 1024 * 1024);
+      if (relative === uploadedReadmePath) {
+        readme = bytes.toString("utf8").slice(0, 1024 * 1024);
+        readmePath = relative;
+      }
     }
 
     const stack = Array.isArray(project.stack) ? project.stack.filter((item): item is string => typeof item === "string").join(", ") : cleanString(project.stack, previous?.stack);
@@ -95,6 +103,27 @@ export async function POST(request: Request) {
     const allFiles = [...mergedFiles.values()].sort((a, b) => a.path.localeCompare(b.path));
     const preferredCover = safePath(project.cover);
     const cover = (preferredCover && allFiles.find((file) => file.path === preferredCover)?.url) || previous?.cover || allFiles.find((file) => file.type.startsWith("image/"))?.url || "";
+    const incomingShowcase = project.showcase;
+    let showcase = previous?.showcase;
+    if (incomingShowcase && typeof incomingShowcase === "object" && !Array.isArray(incomingShowcase)) {
+      const source = incomingShowcase as Record<string, unknown>;
+      const imagePath = (value: unknown) => {
+        const relative = safePath(value);
+        return relative && allFiles.some((file) => file.path === relative && /\.(png|jpe?g|webp)$/i.test(file.path)) ? relative : undefined;
+      };
+      showcase = {
+        highlights: Array.isArray(source.highlights) ? source.highlights.filter((item): item is string => typeof item === "string" && Boolean(item.trim())).slice(0, 12) : [],
+        gallery: Array.isArray(source.gallery) ? source.gallery.flatMap((item) => {
+          if (!item || typeof item !== "object") return [];
+          const relative = imagePath(item.path);
+          return relative ? [{ path: relative, caption: cleanString(item.caption) }] : [];
+        }).slice(0, 40) : [],
+        sections: Array.isArray(source.sections) ? source.sections.flatMap((item) => {
+          if (!item || typeof item !== "object" || !cleanString(item.title)) return [];
+          return [{ title: cleanString(item.title), body: cleanString(item.body), image: imagePath(item.image) }];
+        }).slice(0, 30) : [],
+      } satisfies ProjectShowcase;
+    }
     const next: Project = {
       id,
       title,
@@ -106,7 +135,9 @@ export async function POST(request: Request) {
       url: cleanString(project.url, previous?.url),
       files: allFiles,
       readme,
+      readmePath,
       cover,
+      showcase,
     };
     const projects = existing.some((item) => item.id === id) ? existing.map((item) => item.id === id ? next : item) : [...existing, next];
     await mkdir(path.dirname(dataFile), { recursive: true });

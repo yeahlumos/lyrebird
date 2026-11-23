@@ -1,0 +1,30 @@
+.res-anniversary-page { min-height: 100svh; padding: 28px max(22px, calc((100vw - 1100px)/2)) 190px; color: #2f5148; background-color: #f3f7f2; background-size: cover; background-position: center; background-attachment: fixed; }
+.res-anniversary-page > nav { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 10px 16px; border-radius: 9px; background: #ffffffdf; }
+.res-anniversary-page > nav > span { margin-left: auto; color: #789180; font-size: 10px; letter-spacing: .12em; }
+.res-anniversary-intro { display: flex; align-items: center; flex-wrap: wrap; gap: 22px; margin: 32px 0; padding: 20px; border-radius: 12px; background: #ffffffe3; }
+.res-anniversary-intro h1 { margin: 0 0 12px; font-size: 23px; font-weight: 500; }
+.res-anniversary-intro p { color: #84947e; font-size: 11px; }
+.res-anniversary-name { display: grid; gap: 8px; margin-left: auto; font-size: 11px; color: #809179; }
+.res-anniversary-name input { width: 145px; padding: 9px; border: 1px solid #d5e0d0; border-radius: 5px; background: #fff; color: #476947; }
+.res-anniversary-cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 24px; }
+.res-anniversary-card { position: relative; display: flex; flex-direction: column; min-height: 300px; overflow: hidden; border: 1px solid #ffffffc9; border-radius: 14px; background: #fffffff2; box-shadow: 0 7px 22px #183c2a1c; background-size: cover; background-position: center; }
+.res-anniversary-card > header { min-height: 88px; padding: 20px 70px 15px 22px; background: #5b867c; color: #fff; }
+.res-anniversary-card h2 { margin: 0 0 8px; font-size: 17px; font-weight: 450; overflow-wrap: anywhere; }
+.res-anniversary-card > header > span { font-size: 11px; opacity: .85; }
+.res-anniversary-number { display: flex; flex: 1; align-items: baseline; justify-content: center; padding: 25px 12px; gap: 8px; }
+.res-anniversary-number strong { font-size: clamp(62px, 7vw, 88px); line-height: 1.2; font-weight: 600; font-variant-numeric: tabular-nums; }
+.res-anniversary-number > span { font-size: 13px; }
+.res-anniversary-card footer { padding: 15px; border-top: 1px dashed #b4c6b866; background: #eef4ee90; text-align: center; }
+.res-anniversary-card time { display: block; font-size: 12px; }
+.res-anniversary-card small { display: block; margin-top: 7px; font-size: 10px; opacity: .8; }
+.res-anniversary-card-photo { color: #fff; text-shadow: 0 1px 5px #0006; }
+.res-anniversary-card-photo > header, .res-anniversary-card-photo footer { background: #173c3030; }
+.res-anniversary-tools { position: absolute; top: 13px; right: 10px; display: flex; color: #fff; }
+.res-anniversary-tools .res-icon { width: 28px; height: 28px; }
+.res-anniversary-add { min-height: 300px; background: #ffffffe6; }
+.res-anniversary-note { width: fit-content; margin-top: 25px; padding: 10px 14px; border-radius: 6px; background: #ffffffe0; font-size: 11px; color: #75876d; }
+.res-anniversary-color { display: flex; align-items: center; gap: 18px; margin: 20px 0 12px; }
+.res-anniversary-color label { display: flex; align-items: center; gap: 12px; font-size: 12px; }
+.res-anniversary-color input { width: 46px; height: 32px; padding: 2px; border: 1px solid #ccd9c7; border-radius: 5px; background: #fff; cursor: pointer; }
+.res-anniversary-color-preview { padding: 18px; border-radius: 8px; font-size: 15px; overflow-wrap: anywhere; }
+@media (max-width: 600px) { .res-anniversary-cards { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; } .res-anniversary-card, .res-anniversary-add { min-height: 235px; } .res-anniversary-card > header { padding: 45px 12px 12px; } .res-anniversary-card h2 { font-size: 14px; } .res-anniversary-number { padding: 18px 8px; } .res-anniversary-number strong { font-size: 48px; } .res-anniversary-card time { font-size: 10px; } .res-anniversary-intro { gap: 12px; padding: 15px; } .res-anniversary-intro > .res-pet-animation { width: 90px; height: 90px; } .res-anniversary-intro h1 { font-size: 18px; } .res-anniversary-name { margin-left: 0; width: 100%; } .res-anniversary-name input { width: 100%; } .res-anniversary-page > nav > span { font-size: 8px; } }
