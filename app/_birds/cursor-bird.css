@@ -1,0 +1,28 @@
+.cursor-air-bird {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 58px;
+  height: 52px;
+  z-index: 100;
+  pointer-events: none;
+  opacity: 0;
+  background: transparent;
+  filter: drop-shadow(0 2px 5px rgb(91 62 143 / 25%));
+  transition: opacity .25s ease;
+  will-change: transform;
+}
+
+.cursor-air-bird > div { width: 100%; height: 100%; }
+
+.cursor-air-trail {
+  position: fixed;
+  inset: 0;
+  z-index: 99;
+  pointer-events: none;
+  background: transparent;
+}
+
+@media (prefers-reduced-motion: reduce), (hover: none), (pointer: coarse) {
+  .cursor-air-bird, .cursor-air-trail { display: none; }
+}

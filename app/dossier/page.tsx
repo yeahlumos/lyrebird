@@ -1,12 +1,14 @@
 "use client";
 
+import SettingsButton from "../_ui/settings-button";
+
 import { BackgroundVideo, FollowHomeButton, backgroundAccept, backgroundFormatHint, backgroundImage, createBackgroundMedia, followHome, isBackgroundFile, useHomeBackground, type BackgroundMedia } from "../_background/media";
 
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { motion, useScroll, useTransform } from "framer-motion";
-import { ArrowLeft, ArrowUpRight, BriefcaseBusiness, Check, ChevronLeft, ChevronRight, Cpu, Download, FlaskConical, ImagePlus, Layers3, Pencil, Plus, Settings, Sparkles, Trash2, Trophy, UserRound, Wrench, X } from "lucide-react";
+import { ArrowLeft, ArrowUpRight, BriefcaseBusiness, Check, ChevronLeft, ChevronRight, Cpu, Download, FlaskConical, ImagePlus, Layers3, Pencil, Plus, Sparkles, Trash2, Trophy, UserRound, Wrench, X } from "lucide-react";
 import "./dossier.css";
 import { detailHref, dossierStorageKey, type Dossier, type Node, type Profile, type Project, type Social } from "./types";
 
@@ -301,7 +303,7 @@ export default function DossierPage() {
   const allProjects = [
     ...data.projects.map((item) => {
       const synced = syncedProjects.find((project) => project.id === item.id);
-      return synced ? { ...synced, ...item, files: synced.files, readme: synced.readme, cover: synced.cover } : item;
+      return synced ? { ...synced, ...item, files: synced.files, readme: synced.readme, readmePath: synced.readmePath, cover: synced.cover, showcase: synced.showcase } : item;
     }),
     ...syncedProjects.filter((item) => !data.projects.some((local) => local.id === item.id)),
   ];
@@ -367,7 +369,7 @@ export default function DossierPage() {
   return <main className="dossier-page">
     <header className="dossier-topbar">
       <Link href="/" className="dossier-back" aria-label="返回主页" title="返回主页"><ArrowLeft size={19} /></Link>
-      <div className="dossier-switch" role="tablist" aria-label="个人志视图">
+      <div className="dossier-switch" role="tablist" aria-label="航迹视图">
         {([ ["portfolio", "履历与作品集"], ["timeline", "成长归档"] ] as const).map(([id, label]) => <button key={id} type="button" role="tab" aria-selected={view === id} onClick={() => setView(id)}>
           {view === id && <motion.span className="dossier-switch-active" layoutId="dossier-switch" transition={{ type: "spring", stiffness: 420, damping: 36 }} />}
           <span>{label}</span>
@@ -381,12 +383,12 @@ export default function DossierPage() {
       </div>
     </header>
 
-    <section className="dossier-hero" aria-label={view === "portfolio" ? "个人志封面" : "成长归档封面"}>
+    <section className="dossier-hero" aria-label={view === "portfolio" ? "航迹封面" : "成长归档封面"}>
       <motion.div className="dossier-hero-image" style={{ y: heroOffset, backgroundImage: backgroundImage(activeCover) }}><BackgroundVideo media={activeCover} /></motion.div>
       <div className="dossier-hero-shade" />
-      <div className="dossier-hero-content"><span>DOSSIER / 个人志</span><h1>{view === "portfolio" ? "履历与作品集" : "成长归档"}</h1><p>{view === "portfolio" ? "个人经历与作品" : `${allNodes.length} 个项目与学习节点`}</p></div>
+      <div className="dossier-hero-content"><span>航迹 / Trajectory</span><h1>{view === "portfolio" ? "履历与作品集" : "成长归档"}</h1><p>{view === "portfolio" ? "个人经历与作品" : `${allNodes.length} 个项目与学习节点`}</p></div>
       <div className="dossier-cover-settings">
-        <button className="dossier-cover-trigger" type="button" aria-label="更换个人志背景" title="更换背景" aria-expanded={coverMenuOpen} onClick={() => setCoverMenuOpen(!coverMenuOpen)}><Settings size={20} /></button>
+        <SettingsButton className="ml-auto" type="button" aria-label="更换航迹背景" title="更换背景" aria-expanded={coverMenuOpen} onClick={() => setCoverMenuOpen(!coverMenuOpen)} />
         {coverMenuOpen && <div className="dossier-cover-panel">
           <div className="dossier-cover-panel-head"><strong>背景设置</strong><button type="button" aria-label="关闭背景设置" title="关闭" onClick={() => setCoverMenuOpen(false)}><X size={16} /></button></div>
           <FollowHomeButton active={selectedCover === followHome} onSelect={() => chooseCover(followHome)} />
@@ -422,11 +424,11 @@ export default function DossierPage() {
             <input ref={avatarInputRef} type="file" accept="image/jpeg,image/png,image/webp" hidden aria-label="选择头像照片" onChange={(event) => { void uploadAvatar(event.target.files?.[0]); event.target.value = ""; }} />
           </div>
           <div className="dossier-intro-copy">
-            <span className="dossier-eyebrow">DOSSIER / 个人志</span>
+            <span className="dossier-eyebrow">航迹 / Trajectory</span>
             {editing ? <div className="dossier-edit-stack">
               <input aria-label="姓名" placeholder="姓名" value={data.profile.name} onChange={(event) => profile("name", event.target.value)} />
               <div className="dossier-edit-row"><input aria-label="院校" placeholder="院校" value={data.profile.school} onChange={(event) => profile("school", event.target.value)} /><input aria-label="专业" placeholder="专业" value={data.profile.major} onChange={(event) => profile("major", event.target.value)} /></div>
-            </div> : <><h1>{data.profile.name || "个人志"}</h1><p className="dossier-subtitle">{[data.profile.school, data.profile.major].filter(Boolean).join(" · ")}</p></>}
+            </div> : <><h1>{data.profile.name || "航迹"}</h1><p className="dossier-subtitle">{[data.profile.school, data.profile.major].filter(Boolean).join(" · ")}</p></>}
             <div className="dossier-socials">
               {data.socials.map((social) => editing ? <div className="dossier-social-edit" key={social.id}><input aria-label="链接名称" placeholder="链接名称" value={social.label} onChange={(event) => updateItem<Social>("socials", social.id, "label", event.target.value)} /><input aria-label="链接地址" placeholder="https://..." value={social.url} onChange={(event) => updateItem<Social>("socials", social.id, "url", event.target.value)} /><button type="button" aria-label="删除链接" title="删除链接" onClick={() => removeItem(social.id)}><Trash2 size={15} /></button></div> : safeUrl(social.url) && <a href={safeUrl(social.url)} target="_blank" rel="noopener noreferrer" key={social.id}>{social.label || "链接"}<ArrowUpRight size={14} /></a>)}
               {editing && <button type="button" className="dossier-add-inline" onClick={() => save({ ...data, socials: [...data.socials, { id: crypto.randomUUID(), label: "", url: "" }] })}><Plus size={15} />添加链接</button>}

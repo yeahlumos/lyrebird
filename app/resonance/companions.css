@@ -1,0 +1,54 @@
+.res-companions { position: fixed; z-index: 6; right: max(188px, env(safe-area-inset-right)); bottom: max(24px, env(safe-area-inset-bottom)); display: flex; align-items: center; gap: 12px; }
+.res-diary-main { padding-bottom: 170px; }
+.res-companions > * { display: flex; flex-direction: column; align-items: center; justify-content: center; width: 192px; height: 192px; border: 1px solid #ffffffc9; border-radius: 50%; background: #ffffffb3; box-shadow: 0 6px 25px #213c3226; backdrop-filter: blur(14px); color: #59785d; text-decoration: none; cursor: pointer; }
+.res-pet-animation { position: relative; display: inline-block; flex: none; width: 120px; height: 120px; pointer-events: none; }
+.res-pet-drawing { display: block; width: 100%; height: 100%; }
+.res-anniversary-stars { position: absolute; z-index: 1; width: 180%; height: 180%; left: 50%; top: 20%; transform: translate(-50%, -65%); pointer-events: none; }
+.res-pet-animation svg { display: block; width: 100%; height: 100%; }
+.res-pet-animation image { image-rendering: pixelated; }
+.res-companions small { max-width: 150px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 10px; }
+.res-starlit-ball { position: fixed; z-index: 7; right: max(16px, env(safe-area-inset-right)); bottom: max(12px, env(safe-area-inset-bottom)); display: flex; align-items: flex-end; justify-content: center; width: 160px; height: 160px; padding-bottom: 5px; border: 0; border-radius: 0; background: transparent; box-shadow: none; backdrop-filter: none; text-decoration: none; touch-action: none; user-select: none; cursor: grab; }
+.res-starlit-ball.dragging { cursor: grabbing; }
+.res-wish-animation { position: absolute; inset: 0; pointer-events: none; }
+.res-wish-animation svg { display: block; width: 100%; height: 100%; }
+.res-completion-stars { position: fixed; z-index: 20; width: 240px; height: 240px; transform: translate(-50%, -50%); pointer-events: none; }
+.res-completion-stars svg { display: block; width: 100%; height: 100%; }
+.res-starlit-ball small, .res-pet-ball small { position: relative; z-index: 1; color: #fff; font-family: Georgia, serif; font-size: 15px; letter-spacing: .07em; text-shadow: 0 1px 5px #203b39b3; pointer-events: none; }
+.res-pet-home { display: flex; flex-direction: column; align-items: center; gap: 12px; padding: 22px 12px; border-radius: 12px; background: #ffffffb3; text-align: center; }
+.res-pet-home > .res-pet-animation, .res-pet-reminder .res-pet-animation { width: min(300px, 100%); height: auto; aspect-ratio: 1; }
+.res-pet-reminder { text-align: center; }
+.res-pet-home p { margin: 0; font-size: 12px; line-height: 1.8; }
+.res-pet-home small { color: #87947f; font-size: 11px; }
+.res-milestones { display: grid; gap: 10px; }
+.res-milestones article { display: flex; align-items: center; gap: 4px; padding: 13px; border: 1px solid #e2e8db; border-radius: 8px; background: #fff; }
+.res-milestones article > div { flex: 1; min-width: 0; display: grid; gap: 5px; }
+.res-milestones strong { font-size: 13px; overflow-wrap: anywhere; }
+.res-milestones small { font-size: 10px; color: #87947f; }
+.res-milestones article span { font-size: 11px; color: #b2866d; }
+.res-event-form { margin-top: 20px; padding-top: 12px; border-top: 1px solid #e2e8db; font-size: 12px; }
+.res-event-dates { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.res-event-dates input { min-width: 0; letter-spacing: 0; }
+.res-bucket-page { min-height: 100svh; padding: 30px max(22px, calc((100vw - 850px)/2)) 130px; color: #304b43; background: radial-gradient(ellipse at 90% 0,#f1e5d899,transparent 60%), #f8faf6; }
+.res-bucket-page > nav { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.res-bucket-page > nav > span { color: #90a08d; font-size: 9px; letter-spacing: .08em; }
+.res-bucket-page > header { padding: 70px 0 32px; }
+.res-bucket-page h1 { font-size: clamp(23px,3vw,32px); font-weight: 450; margin: 12px 0 20px; }
+.res-bucket-page header p { color: #83927f; font-size: 12px; }
+.res-bucket-page progress { width: 100%; height: 6px; accent-color: #789b7c; }
+.res-wish-add { display: flex; gap: 9px; flex-wrap: wrap; }
+.res-wish-add input { flex: 1; min-width: min(100%,240px); padding: 13px; border: 1px solid #dbe5d7; border-radius: 6px; background: #fff; font: inherit; font-size: 12px; color: #304b43; }
+.res-wish-tabs { max-width: 330px; margin: 28px 0 20px; }
+.res-wishes { display: grid; gap: 12px; }
+.res-wishes article { display: flex; gap: 10px; align-items: center; padding: 20px 16px; border: 1px solid #e1e8da; border-radius: 10px; background: #ffffffc9; }
+.res-wishes article > div { flex: 1; min-width: 0; }
+.res-wishes h2 { margin: 0; font-size: 14px; font-weight: 500; overflow-wrap: anywhere; }
+.res-wishes small { display: block; margin-top: 8px; color: #97a18e; font-size: 10px; }
+.res-wishes a { display: inline-block; margin-top: 9px; color: #64836c; font-size: 11px; }
+.res-wishes .done { background: #eef4e9ab; }
+.res-wish-check { display: grid; place-items: center; flex: none; width: 25px; height: 25px; padding: 0; border: 1px solid #b8cbb3; border-radius: 50%; background: #fff; color: #64836c; cursor: pointer; }
+.res-bucket-page select { width: 100%; padding: 10px; border: 1px solid #dbe5d7; border-radius: 5px; background: #fff; color: #304b43; }
+@media (max-width: 650px) { .res-companions > * { width: 168px; height: 168px; } .res-companions { right: 163px; bottom: 18px; gap: 8px; } .res-starlit-ball { width: calc(208px * 2 / 3); height: calc(208px * 2 / 3); } .res-bucket-page > nav > span { display: none; } .res-bucket-page > header { padding-top: 40px; } .res-wishes article { padding: 16px 10px; gap: 6px; } }
+
+.res-companions > .res-pet-ball { position: fixed; right: max(188px, env(safe-area-inset-right)); bottom: max(24px, env(safe-area-inset-bottom)); touch-action: none; user-select: none; cursor: grab; border: 0; border-radius: 0; background: transparent; box-shadow: none; backdrop-filter: none; }
+.res-pet-ball.dragging { cursor: grabbing; }
+@media (max-width: 650px) { .res-companions > .res-pet-ball { right: 163px; bottom: 18px; } }

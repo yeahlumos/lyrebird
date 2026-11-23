@@ -1,0 +1,29 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" fill="none">
+  <defs>
+    <linearGradient id="lyrebird" x1="99" y1="78" x2="417" y2="438" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#B283EC" />
+      <stop offset=".44" stop-color="#8366D7" />
+      <stop offset="1" stop-color="#468EDB" />
+    </linearGradient>
+    <mask id="bird-interior" maskUnits="userSpaceOnUse" x="0" y="0" width="512" height="512">
+      <rect width="512" height="512" fill="white" />
+      <path d="M184 432C194 394 214 370 242 353C259 343 277 338 286 322C297 304 291 284 305 274C318 264 332 267 341 275C325 286 319 299 320 316C321 338 333 357 327 381C320 413 298 428 270 429C234 430 210 421 184 432Z" fill="black" />
+    </mask>
+  </defs>
+  <g mask="url(#bird-interior)">
+    <g stroke="url(#lyrebird)" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M165 404C96 413 55 368 66 312C78 253 142 203 159 140C168 106 159 79 135 75C112 71 96 88 100 108C103 125 124 130 131 115" stroke-width="15" />
+      <path d="M347 404C416 413 457 368 446 312C434 253 370 203 353 140C344 106 353 79 377 75C400 71 416 88 412 108C409 125 388 130 381 115" stroke-width="15" />
+      <path d="M162 142H350" stroke-width="12" />
+      <path d="M208 147V344M256 147V311M304 147V257" stroke-width="10" />
+      <path d="M72 339C105 375 140 391 185 396M440 339C413 371 383 389 348 396" stroke-width="10" />
+    </g>
+    <g fill="url(#lyrebird)">
+      <path d="M188 269C145 245 111 286 130 326C144 356 166 373 195 385C161 358 146 330 149 309C152 287 167 274 188 269Z" />
+      <path d="M336 269C378 245 406 287 388 326C375 355 359 374 334 389C359 360 372 331 370 309C368 287 354 274 336 269Z" />
+      <path fill-rule="evenodd" d="M171 447C178 403 198 369 235 346C253 335 267 333 276 318C286 301 282 280 297 267C314 251 338 254 351 268C361 267 371 270 379 274C353 281 336 295 332 315C328 335 342 356 339 378C335 416 310 439 272 441C233 442 206 429 171 447ZM184 432C203 414 221 410 247 406C273 402 290 389 301 373C297 392 282 408 258 416C231 422 207 416 184 432Z" />
+    </g>
+  </g>
+  <path d="M194 425C213 409 227 406 248 400C268 394 284 384 294 372C290 388 276 401 253 409C230 417 211 414 194 425Z" fill="url(#lyrebird)" />
+  <circle cx="327" cy="277" r="4.5" fill="url(#lyrebird)" />
+</svg>

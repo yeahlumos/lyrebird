@@ -151,7 +151,7 @@ function DetailContent() {
     fetch("/api/projects/sync", { cache: "no-store" }).then((response) => response.json()).then((value: unknown) => {
       const synced = Array.isArray(value) ? value.find((project): project is Project => Boolean(project && project.id === id && typeof project.title === "string")) : null;
       setSyncedProject(synced ?? null);
-      setRecord(item && synced ? { ...synced, ...item, files: synced.files, readme: synced.readme, cover: synced.cover } : item ?? synced ?? null);
+      setRecord(item && synced ? { ...synced, ...item, files: synced.files, readme: synced.readme, readmePath: synced.readmePath, cover: synced.cover, showcase: synced.showcase } : item ?? synced ?? null);
     }).catch(() => setRecord(item ?? null)).finally(() => setReady(true));
   }, [kind, id, validKind]);
 
@@ -193,7 +193,7 @@ function DetailContent() {
     try {
       localStorage.setItem(dossierStorageKey, JSON.stringify(next));
       const saved = nextItems.find((item) => item.id === id) ?? null;
-      setRecord(kind === "project" && syncedProject && saved ? { ...syncedProject, ...saved, files: syncedProject.files, readme: syncedProject.readme, cover: syncedProject.cover } : saved);
+      setRecord(kind === "project" && syncedProject && saved ? { ...syncedProject, ...saved, files: syncedProject.files, readme: syncedProject.readme, readmePath: syncedProject.readmePath, cover: syncedProject.cover, showcase: syncedProject.showcase } : saved);
       setError("");
     } catch { setError("保存失败，请检查浏览器存储空间。"); }
   };
@@ -255,21 +255,30 @@ function DetailContent() {
   };
 
   if (!ready) return <main className="dossier-detail-page" />;
-  if (!record || !validKind) return <main className="dossier-detail-page"><div className="dossier-detail-missing"><Link href="/dossier"><ArrowLeft size={17} />返回个人志</Link><h1>记录不存在</h1></div></main>;
+  if (!record || !validKind) return <main className="dossier-detail-page"><div className="dossier-detail-missing"><Link href="/dossier"><ArrowLeft size={17} />返回航迹</Link><h1>记录不存在</h1></div></main>;
 
   const title = kind === "project" ? text(record, "title") : kind === "skill" ? text(record, "name") : kind === "experience" ? text(record, "organization") || text(record, "role") : kind === "education" ? text(record, "school") : text(record, "title");
   const period = kind === "award" || kind === "node" ? text(record, "date") : kind === "skill" ? text(record, "group") : text(record, "period");
   const subtitle = kind === "project" || kind === "experience" ? text(record, "role") : kind === "education" ? text(record, "program") : kind === "award" ? text(record, "organizer") : kind === "node" ? text(record, "category") : levelNames[Number(text(record, "level"))] || "未评级";
   const longText = kind === "project" ? text(record, "detail") : kind === "skill" ? text(record, "description") : text(record, "detail");
   const project = kind === "project" ? record as Project : null;
-  const allFiles: Attachment[] = [...(project?.files ?? []).map((file) => ({ name: file.path.split("/").at(-1) || file.path, path: file.path, type: file.type, url: file.url, size: file.size })), ...attachments];
+  const allFiles: Attachment[] = [...new Map([
+    ...(project?.files ?? []).map((file): Attachment => ({ name: file.path.split("/").at(-1) || file.path, path: file.path, type: file.type, url: file.url, size: file.size })),
+    ...attachments,
+  ].map((file) => [file.path, file])).values()];
   const images = kind === "project" ? allFiles.filter(isImage) : [];
-  const readme = allFiles.find((file) => file.path.toLowerCase() === "readme.md");
+  const showcase = project?.showcase;
+  const gallery = showcase?.gallery.length ? showcase.gallery.flatMap((item) => {
+    const file = images.find((file) => file.path === item.path);
+    return file ? [{ file, caption: item.caption }] : [];
+  }) : images.map((file) => ({ file, caption: "" }));
+  const readme = allFiles.filter((file) => /(^|\/)readme\.md$/i.test(file.path))
+    .sort((a, b) => a.path.split("/").length - b.path.split("/").length || a.path.localeCompare(b.path))[0];
   const openPreview = (file: Attachment) => { setPreview(file); setPreviewText(""); };
 
   return <main className="dossier-detail-page">
     <header className="dossier-detail-nav">
-      <Link href="/dossier" className="dossier-detail-back" aria-label="返回个人志" title="返回个人志"><ArrowLeft size={19} /></Link>
+      <Link href="/dossier" className="dossier-detail-back" aria-label="返回航迹" title="返回航迹"><ArrowLeft size={19} /></Link>
       <span>{labels[kind]}</span>
       <div className="dossier-detail-actions">
         <button type="button" title="上传文件" onClick={() => fileInputRef.current?.click()} disabled={busy}><Paperclip size={18} /><span>上传文件</span></button>
@@ -280,7 +289,7 @@ function DetailContent() {
     </header>
 
     <article className="dossier-detail-content">
-      <div className="dossier-detail-breadcrumb"><Link href="/dossier">Dossier / 个人志</Link><span>/</span><span>{labels[kind]}</span></div>
+      <div className="dossier-detail-breadcrumb"><Link href="/dossier">航迹 / Trajectory</Link><span>/</span><span>{labels[kind]}</span></div>
       {editing ? <div className="dossier-detail-form">
         <label>{kind === "project" ? "项目名称" : kind === "skill" ? "技能名称" : kind === "experience" ? "机构或团队" : kind === "education" ? "学校" : kind === "node" ? "节点标题" : "荣誉名称"}<input value={title} onChange={(event) => update(kind === "skill" ? "name" : kind === "experience" ? "organization" : kind === "education" ? "school" : "title", event.target.value)} /></label>
         {kind === "skill" ? <><label>所属分类<select value={text(record, "group")} onChange={(event) => update("group", event.target.value)}>{["开发与技术", "硬件与工程", "研究与方法", "工具与表达", "其他"].map((group) => <option key={group}>{group}</option>)}</select></label><label>熟练度<select value={text(record, "level")} onChange={(event) => update("level", Number(event.target.value))}>{levelNames.map((name, index) => <option key={name} value={index}>{name}</option>)}</select></label></> : <label>{kind === "award" ? "获得时间" : "时间"}<input value={period} onChange={(event) => update(kind === "award" || kind === "node" ? "date" : "period", event.target.value)} /></label>}
@@ -297,10 +306,14 @@ function DetailContent() {
         {kind === "skill" && <div className="dossier-detail-rating" aria-label={`熟练度：${subtitle}`}>{Array.from({ length: 5 }, (_, index) => <i key={index} className={index < Number(text(record, "level")) ? "filled" : ""} />)}</div>}
         {(kind === "project" || kind === "node") && text(record, "summary") && <section className="dossier-detail-section"><h2>{kind === "project" ? "项目成果" : "摘要"}</h2><p>{text(record, "summary")}</p></section>}
         {longText && <section className="dossier-detail-section"><h2>{kind === "project" ? "项目详情" : kind === "skill" ? "实践与应用" : "详细内容"}</h2><p>{longText}</p></section>}
-        {kind === "project" && project?.readme && !attachments.some((file) => file.path.toLowerCase() === "readme.md") && <section className="dossier-detail-section"><h2>项目说明</h2><ProjectMarkdown content={project.readme} files={allFiles} /></section>}
-        {kind === "project" && readme?.blob && <section className="dossier-detail-section"><h2>项目说明</h2><Readme blob={readme.blob} files={allFiles} /></section>}
-        {kind === "project" && images.length > 0 && <section className="dossier-detail-section"><h2>项目图片</h2><div className="dossier-detail-gallery">{images.map((file) => <button key={file.key || file.path} type="button" onClick={() => openPreview(file)} aria-label={`放大${file.path}`}>
-          <img src={file.url} alt={file.path} /></button>)}</div></section>}
+        {showcase && showcase.highlights.length > 0 && <section className="dossier-detail-section"><h2>项目亮点</h2><div className="dossier-showcase-highlights">{showcase.highlights.map((highlight, index) => <div key={index}><span>{String(index + 1).padStart(2, "0")}</span><p>{highlight}</p></div>)}</div></section>}
+        {gallery.length > 0 && <section className="dossier-detail-section"><h2>作品一览</h2><div className="dossier-detail-gallery">{gallery.map(({ file, caption }) => <figure key={file.key || file.path}><button type="button" onClick={() => openPreview(file)} aria-label={`放大${caption || file.path}`}><img src={file.url} alt={caption || file.path} /></button>{caption && <figcaption>{caption}</figcaption>}</figure>)}</div></section>}
+        {showcase?.sections.map((section, index) => {
+          const image = section.image ? images.find((file) => file.path === section.image) : undefined;
+          return <section className="dossier-detail-section dossier-showcase-section" key={index}><h2>{section.title}</h2><ProjectMarkdown content={section.body} files={allFiles} />{image && <button className="dossier-showcase-image" type="button" onClick={() => openPreview(image)} aria-label={`放大${section.title}配图`}><img src={image.url} alt={section.title} /></button>}</section>;
+        })}
+        {kind === "project" && readme && <section className="dossier-detail-section"><h2>项目说明</h2><Readme key={readme.url} file={readme} files={allFiles} /></section>}
+        {kind === "project" && !readme && project?.readme && <section className="dossier-detail-section"><h2>项目说明</h2><ProjectMarkdown content={project.readme} files={allFiles} sourcePath={project.readmePath} /></section>}
         {kind === "project" && safeUrl(text(record, "url")) && <a className="dossier-detail-external" href={safeUrl(text(record, "url"))} target="_blank" rel="noopener noreferrer">项目链接 <ExternalLink size={16} /></a>}
       </>}
 
@@ -316,17 +329,32 @@ function DetailContent() {
       {error && <p className="dossier-detail-error" role="alert">{error}</p>}
       {editing && !syncedProject && <div className="dossier-detail-danger"><button type="button" disabled={busy} onClick={() => void removeRecord()}><Trash2 size={15} />删除这条记录</button></div>}
     </article>
-    {preview && <div className="dossier-detail-preview" role="dialog" aria-modal="true" aria-label={`预览${preview.path}`} onClick={() => setPreview(null)}><div className="dossier-detail-preview-panel" onClick={(event) => event.stopPropagation()}><header><span>{preview.path}</span><a href={preview.url} download={preview.name} title="下载" aria-label="下载"><Download size={18} /></a><button type="button" title="关闭" aria-label="关闭" onClick={() => setPreview(null)}><X size={19} /></button></header>{isImage(preview) ? <img src={preview.url} alt={preview.path} /> : /\.pdf$/i.test(preview.path) ? <iframe title={preview.path} src={preview.url} /> : isText(preview) ? /\.md$/i.test(preview.path) ? <ProjectMarkdown content={previewText} files={allFiles} /> : <pre>{previewText}</pre> : <p>此文件可下载查看。</p>}</div></div>}
+    {preview && <div className="dossier-detail-preview" role="dialog" aria-modal="true" aria-label={`预览${preview.path}`} onClick={() => setPreview(null)}><div className="dossier-detail-preview-panel" onClick={(event) => event.stopPropagation()}><header><span>{preview.path}</span><a href={preview.url} download={preview.name} title="下载" aria-label="下载"><Download size={18} /></a><button type="button" title="关闭" aria-label="关闭" onClick={() => setPreview(null)}><X size={19} /></button></header>{isImage(preview) ? <img src={preview.url} alt={preview.path} /> : /\.pdf$/i.test(preview.path) ? <iframe title={preview.path} src={preview.url} /> : isText(preview) ? /\.md$/i.test(preview.path) ? <ProjectMarkdown content={previewText} files={allFiles} sourcePath={preview.path} /> : <pre>{previewText}</pre> : <p>此文件可下载查看。</p>}</div></div>}
   </main>;
 }
 
-function ProjectMarkdown({ content, files }: { content: string; files: Attachment[] }) {
-  const resolve = (value?: string) => files.find((file) => file.path === value?.replace(/^\.\//, ""))?.url || value;
+function ProjectMarkdown({ content, files, sourcePath = "README.md" }: { content: string; files: Attachment[]; sourcePath?: string }) {
+  const resolve = (value?: string) => {
+    if (!value || /^(?:[a-z][a-z\d+.-]*:|\/|#)/i.test(value)) return value;
+    try {
+      const base = new URL(sourcePath.split("/").map(encodeURIComponent).join("/"), "https://lyrebird.local/");
+      const resolved = new URL(value, base);
+      const relative = decodeURIComponent(resolved.pathname.slice(1));
+      const file = files.find((file) => file.path === relative);
+      return file ? `${file.url}${resolved.search}${resolved.hash}` : value;
+    } catch { return value; }
+  };
   return <div className="dossier-detail-markdown"><ReactMarkdown remarkPlugins={[remarkGfm]} components={{ img: ({ src, alt }) => <img src={resolve(typeof src === "string" ? src : undefined)} alt={alt || ""} />, a: ({ href, children }) => <a href={resolve(href)} target="_blank" rel="noopener noreferrer">{children}</a> }}>{content}</ReactMarkdown></div>;
 }
 
-function Readme({ blob, files }: { blob: Blob; files: Attachment[] }) {
+function Readme({ file, files }: { file: Attachment; files: Attachment[] }) {
   const [content, setContent] = useState("");
-  useEffect(() => { let active = true; blob.text().then((value) => { if (active) setContent(value.slice(0, 500_000)); }); return () => { active = false; }; }, [blob]);
-  return <ProjectMarkdown content={content} files={files} />;
+  useEffect(() => {
+    let active = true;
+    (file.blob ? file.blob.text() : fetch(file.url).then((response) => { if (!response.ok) throw new Error(); return response.text(); }))
+      .then((value) => { if (active) setContent(value.slice(0, 500_000)); })
+      .catch(() => { if (active) setContent("说明书读取失败，请在文件仓库下载查看。"); });
+    return () => { active = false; };
+  }, [file.blob, file.url]);
+  return <ProjectMarkdown content={content} files={files} sourcePath={file.path} />;
 }

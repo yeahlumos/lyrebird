@@ -1,10 +1,12 @@
 "use client";
 
+import SettingsButton from "../_ui/settings-button";
+
 import { BackgroundVideo, FollowHomeButton, backgroundAccept, backgroundFormatHint, backgroundImage, createBackgroundMedia, isBackgroundFile, useHomeBackground, type BackgroundMedia } from "../_background/media";
 
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
-import { ArrowLeft, Check, ChevronLeft, ChevronRight, ImagePlus, Plus, Settings2, Trash2, X } from "lucide-react";
+import { ArrowLeft, Check, ChevronLeft, ChevronRight, ImagePlus, Plus, Trash2, X } from "lucide-react";
 import "./diary.css";
 
 type Post = { id: string; text: string; images: string[]; createdAt: string };
@@ -430,7 +432,7 @@ export default function DiaryPage() {
             <div className="diary-nav"><button type="button" aria-label="前一天" title="前一天" onClick={() => changeDate(new Date(selectedDate.getFullYear(), selectedDate.getMonth(), selectedDate.getDate() - 1))}><ChevronLeft size={20} /></button><button type="button" aria-label="后一天" title="后一天" onClick={() => changeDate(new Date(selectedDate.getFullYear(), selectedDate.getMonth(), selectedDate.getDate() + 1))}><ChevronRight size={20} /></button></div>
             <select className="diary-mood" aria-label="当日心情" value={entry.mood} onChange={(event) => updateEntry(selected, { mood: event.target.value })}><option value="">心情</option>{moods.map((mood) => <option key={mood} value={mood}>{mood}</option>)}</select>
             <span className="diary-save-status"><Check size={14} />{saveState}</span>
-            <button className="diary-settings-button" type="button" aria-label="背景设置" title="背景设置" onClick={() => setCoverSettingsOpen(true)}><Settings2 size={20} /></button>
+            <SettingsButton type="button" aria-label="背景设置" title="背景设置" onClick={() => setCoverSettingsOpen(true)} />
           </div>
         </header>
 

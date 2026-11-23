@@ -1,13 +1,20 @@
 "use client";
 
+import SettingsButton from "./_ui/settings-button";
+import { cursorBirdKey, cursorBirdChangeEvent } from "./_birds/cursor-preference";
+
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { BackgroundVideo, backgroundAccept, backgroundFormatHint, backgroundImage, createBackgroundMedia, homeBackgroundKey as preferenceKey, homeUploadId as customKey, homeUploadRevisionKey, isBackgroundFile, readBackgroundUpload, writeBackgroundUpload, type BackgroundMedia } from "./_background/media";
 import { useCardEntrance } from "./_home/use-card-entrance";
 import { useHeroEntrance } from "./_home/use-hero-entrance";
 import { useHomeVideo } from "./_home/use-home-video";
 import { useSectionWheel } from "./_home/use-section-wheel";
+import { birdStyleChangeEvent, birdStyleKey, parseBirdStyle, type BirdStyle } from "./_birds/flight";
+import LyrebirdTitle from "./_home/lyrebird-title";
 import "./_home/home-motion.css";
+import { ThemeToggle, useTheme } from "./_theme/theme";
 import {
   ArrowDown,
   ArrowRight,
@@ -19,7 +26,6 @@ import {
   NotebookPen,
   Orbit,
   Radar,
-  Settings,
   Sparkles,
   Trash2,
   Volume2,
@@ -44,17 +50,20 @@ const backgrounds: readonly BackgroundPreset[] = [
 const sections = [
   { number: "01", title: "Gleam / 浮光", description: "灵感记录空间", icon: Sparkles, className: "gleam" },
   { number: "02", title: "Solitude / 独白", description: "记录每一天", icon: NotebookPen, className: "diary" },
-  { number: "03", title: "Dossier / 个人志", description: "履历与成长归档", icon: FolderOpen, className: "dossier" },
+  { number: "03", title: "航迹 / Trajectory", description: "履历与成长归档", icon: FolderOpen, className: "dossier" },
   { number: "04", title: "Atelier / 造物", description: "项目与学习", icon: BookOpenText, className: "atelier" },
-  { number: "05", title: "Resonance / 共鸣", description: "即将开启", icon: Orbit, className: "resonance" },
+  { number: "05", title: "Resonance / 共鸣", description: "写下属于两个人的日记", icon: Orbit, className: "resonance" },
   { number: "06", title: "Gravity / 引力场", description: "即将开启", icon: Radar, className: "gravity" },
   { number: "07", title: "Hollow / 树洞", description: "即将开启", icon: HeartHandshake, className: "hollow" },
 ] as const;
 
 export default function Home() {
+  const dark = useTheme();
   const [selected, setSelected] = useState("bird3");
   const [customMedia, setCustomMedia] = useState<BackgroundMedia>();
   const [settingsOpen, setSettingsOpen] = useState(false);
+  const [birdStyle, setBirdStyle] = useState<BirdStyle>("outline");
+  const [cursorBirdEnabled, setCursorBirdEnabled] = useState(true);
   const [uploadError, setUploadError] = useState("");
   const [uploading, setUploading] = useState(false);
   const customUrlRef = useRef<string | undefined>(undefined);
@@ -68,6 +77,10 @@ export default function Home() {
 
   useEffect(() => {
     let active = true;
+    queueMicrotask(() => {
+      if (active) setBirdStyle(parseBirdStyle(localStorage.getItem(birdStyleKey)));
+      if (active) setCursorBirdEnabled(localStorage.getItem(cursorBirdKey) !== "off");
+    });
     const saved = localStorage.getItem(preferenceKey);
     if (saved === "see-you") localStorage.removeItem(preferenceKey);
     if (saved && backgrounds.some((background) => background.id === saved)) {
@@ -117,6 +130,12 @@ export default function Home() {
     setSelected(id);
     localStorage.setItem(preferenceKey, id);
     setUploadError("");
+  };
+
+  const chooseBirdStyle = (style: BirdStyle) => {
+    setBirdStyle(style);
+    localStorage.setItem(birdStyleKey, style);
+    window.dispatchEvent(new Event(birdStyleChangeEvent));
   };
 
   const uploadBackground = async (file?: File) => {
@@ -175,7 +194,7 @@ export default function Home() {
         </div>
         <div className="hero-shade" />
         <div className="hero-topline">
-          <span className="topline-mark">LYREBIRD <span>琴鸟</span></span>
+          <span className="topline-mark"><Image className="site-logo" src="/lyrebird-logo.svg" alt="" width={36} height={36} priority />LYREBIRD <span>琴鸟</span></span>
           <div className="hero-actions">
             {videoSource && <button
               type="button"
@@ -187,21 +206,18 @@ export default function Home() {
             >
               <SoundIcon size={21} strokeWidth={1.7} />
             </button>}
-            <button
+            <SettingsButton
               ref={settingsButtonRef}
-              className="settings-trigger"
               type="button"
-              aria-label="背景设置"
-              title="背景设置"
+              aria-label="外观设置"
+              title="外观设置"
               onClick={() => setSettingsOpen(true)}
-            >
-              <Settings size={21} strokeWidth={1.7} />
-            </button>
+            />
           </div>
         </div>
 
         <div className="hero-content" key={heroEntrance} data-entrance={heroEntrance}>
-          <h1 id="site-title">Lyrebird</h1>
+          <LyrebirdTitle />
           <span className="hero-divider" aria-hidden="true" />
           <p><span className="hero-type">for you, a thousand times over</span></p>
         </div>
@@ -231,12 +247,12 @@ export default function Home() {
                       <h3>{section.title}</h3>
                       <p>{section.description}</p>
                     </div>
-                    {["01", "02", "03", "04"].includes(section.number) ? <ArrowRight size={22} strokeWidth={1.7} aria-hidden="true" /> : <span className="coming-soon">敬请期待</span>}
+                    {["01", "02", "03", "04", "05"].includes(section.number) ? <ArrowRight size={22} strokeWidth={1.7} aria-hidden="true" /> : <span className="coming-soon">敬请期待</span>}
                   </div>
                 </>
               );
-              return ["01", "02", "03", "04"].includes(section.number) ? (
-                <Link className={`space-card ${section.className} space-card-link`} href={section.number === "01" ? "/gleam" : section.number === "02" ? "/diary" : section.number === "03" ? "/dossier" : "/atelier"} key={section.number}>
+              return ["01", "02", "03", "04", "05"].includes(section.number) ? (
+                <Link className={`space-card ${section.className} space-card-link`} href={section.number === "01" ? "/gleam" : section.number === "02" ? "/diary" : section.number === "03" ? "/dossier" : section.number === "05" ? "/resonance" : "/atelier"} key={section.number}>
                   {content}
                 </Link>
               ) : (
@@ -257,12 +273,13 @@ export default function Home() {
             <div className="settings-header">
               <div>
                 <span className="settings-eyebrow">PERSONALIZE</span>
-                <h2 id="settings-title">背景设置</h2>
+                <h2 id="settings-title">外观设置</h2>
               </div>
               <button ref={closeButtonRef} className="close-button" type="button" aria-label="关闭设置" title="关闭设置" onClick={() => setSettingsOpen(false)}>
                 <X size={21} />
               </button>
             </div>
+            <section className="global-theme-setting"><div><h3>深色模式</h3><p>统一切换所有页面的界面配色</p></div><ThemeToggle dark={dark} className="global-theme-toggle" /></section>
             <p className="settings-intro">选择你喜欢的首页画面</p>
             <div className="preset-grid" role="group" aria-label="预设背景">
               {backgrounds.map((background) => (
@@ -310,6 +327,23 @@ export default function Home() {
               </div>
             )}
             {uploadError && <p className="upload-error" role="alert">{uploadError}</p>}
+            <section className="bird-style-settings" aria-labelledby="bird-style-title">
+              <h3 id="bird-style-title">飞鸟样式</h3>
+              <div className="bird-style-options" role="group" aria-label="全站飞鸟样式">
+                <button type="button" className={birdStyle === "outline" ? "selected" : ""} aria-pressed={birdStyle === "outline"} onClick={() => chooseBirdStyle("outline")}>线稿飞鸟</button>
+                <button type="button" className={birdStyle === "lottie" ? "selected" : ""} aria-pressed={birdStyle === "lottie"} onClick={() => chooseBirdStyle("lottie")}>动态飞鸟</button>
+                <button type="button" className={birdStyle === "flock" ? "selected" : ""} aria-pressed={birdStyle === "flock"} onClick={() => chooseBirdStyle("flock")}>流线飞鸟</button>
+                <button type="button" className={birdStyle === "none" ? "selected" : ""} aria-pressed={birdStyle === "none"} onClick={() => chooseBirdStyle("none")}>无飞鸟</button>
+              </div>
+              <label className="cursor-bird-setting">
+                <span>鼠标飞鸟与拖尾</span>
+                <input type="checkbox" checked={cursorBirdEnabled} onChange={(event) => {
+                  setCursorBirdEnabled(event.target.checked);
+                  localStorage.setItem(cursorBirdKey, event.target.checked ? "on" : "off");
+                  window.dispatchEvent(new Event(cursorBirdChangeEvent));
+                }} />
+              </label>
+            </section>
           </aside>
         </div>
       )}

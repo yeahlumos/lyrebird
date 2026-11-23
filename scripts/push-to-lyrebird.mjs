@@ -1,4 +1,4 @@
-import { readFile, readdir } from "node:fs/promises";
+import { readFile, readdir, stat } from "node:fs/promises";
 import path from "node:path";
 
 const root = process.cwd();
@@ -25,10 +25,15 @@ function contentType(filename) {
 }
 
 try {
-  const metadata = JSON.parse(await readFile(path.join(root, "lyrebird.json"), "utf8"));
+  const metadata = JSON.parse((await readFile(path.join(root, "lyrebird.json"), "utf8")).replace(/^\uFEFF/, ""));
+  if (!metadata || typeof metadata !== "object" || Array.isArray(metadata)) throw new Error("lyrebird.json 必须是 JSON 对象。");
   const id = metadata.id || path.basename(root).toLowerCase().replace(/[^a-z0-9_-]+/g, "-").replace(/^-+|-+$/g, "");
-  if (!id || !metadata.title) throw new Error("lyrebird.json 需要 title；项目目录名无法生成 ID 时还需要 id。");
+  if (typeof id !== "string" || !/^[a-zA-Z0-9][a-zA-Z0-9_-]{0,63}$/.test(id) || typeof metadata.title !== "string" || !metadata.title.trim()) throw new Error("lyrebird.json 需要非空 title 和有效 id（1～64 位字母、数字、下划线或连字符）。");
   const paths = (await listFiles(root)).sort();
+  if (paths.length > 1000) throw new Error("最多推送 1000 个文件，请先清理构建产物。");
+  let totalBytes = 0;
+  for (const relative of paths) totalBytes += (await stat(path.join(root, ...relative.split("/")))).size;
+  if (totalBytes > 100 * 1024 * 1024) throw new Error("推送文件总大小不能超过 100 MB。");
   if (!paths.some((name) => name.toLowerCase() === "readme.md")) throw new Error("项目根目录缺少 README.md。");
   const manifest = { project: { ...metadata, id }, paths };
   const form = new FormData();

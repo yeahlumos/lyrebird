@@ -43,6 +43,19 @@ yarn-error.log*
 /myidea/
 /public/see_you.jpg
 
+# Local previews and recordings; tracked history remains tracked
+/Output/
+/屏幕录制*.mp4
+
+# Keep only animation assets imported by the application
+/flowball/*
+!/flowball/air bird.json
+!/flowball/Bird Flock (Test).json
+!/flowball/flying bird.json
+!/flowball/Wish Completion Stars.json
+!/flowball/Bouncing Black Cat.json
+!/flowball/Starlit Wave and Sparkle.json
+
 # vercel
 .vercel
 
